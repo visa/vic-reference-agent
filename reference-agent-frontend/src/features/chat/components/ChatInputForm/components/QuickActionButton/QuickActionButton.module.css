@@ -1,0 +1,92 @@
+/* © 2026 Visa.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/* Quick Action Buttons */
+.quickActions {
+  display: flex;
+  gap: var(--size-scalable-8);
+  margin-top: var(--size-scalable-12);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.quickActionButton {
+  display: flex;
+  align-items: center;
+  gap: var(--size-scalable-6);
+  padding: var(--size-scalable-8) var(--size-scalable-12);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(20, 52, 203, 0.2);
+  border-radius: var(--size-rounded-pill);
+  color: var(--visa-blue);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+}
+
+.quickActionLabel {
+  margin-bottom: 0;
+  color: inherit;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.quickActionButton:hover:not(:disabled) {
+  background: var(--visa-blue);
+  color: var(--visa-white);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(20, 52, 203, 0.3);
+}
+
+.quickActionButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.quickActionIcon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .quickActions {
+    gap: var(--size-scalable-6);
+    margin-top: var(--size-scalable-10);
+  }
+
+  .quickActionButton {
+    padding: var(--size-scalable-6) var(--size-scalable-10);
+  }
+
+  .quickActionLabel {
+    font-size: 12px;
+  }
+
+  .quickActionIcon {
+    width: 12px;
+    height: 12px;
+  }
+}
+
+/* Dark mode support (if needed later) */
+@media (prefers-color-scheme: dark) {
+  .quickActionButton {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--visa-white);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+  
+  .quickActionButton:hover:not(:disabled) {
+    background: var(--visa-blue);
+    color: var(--visa-white);
+  }
+}

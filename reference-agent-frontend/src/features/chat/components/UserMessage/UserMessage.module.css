@@ -1,0 +1,145 @@
+/* © 2026 Visa.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/* UserMessage CSS Module */
+
+/* Main Container */
+.userMessageContainer {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--size-scalable-12);
+  margin-bottom: var(--size-scalable-16);
+  max-width: 100%;
+  justify-content: flex-end;
+  animation: slideInRight 0.3s ease-out;
+}
+
+/* Message Content */
+.messageContent {
+  flex: 0 1 auto;
+  max-width: 75%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.messageBubble {
+  background: linear-gradient(135deg, var(--visa-blue) 0%, #0f2a8f 100%);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  padding: var(--size-scalable-14) var(--size-scalable-16);
+  box-shadow: var(--elevation-small);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  transition: all 0.2s ease;
+  max-width: 100%;
+}
+
+.messageBubble:hover {
+  box-shadow: var(--elevation-medium);
+  transform: translateY(-1px);
+}
+
+.messageText {
+  margin: 0;
+  margin-bottom: 0;
+  color: var(--visa-white);
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  text-align: left;
+}
+
+.timestamp {
+  margin-top: var(--size-scalable-4);
+  margin-bottom: 0;
+  color: var(--palette-default-text-subtle);
+  text-align: right;
+  padding-right: var(--size-scalable-4);
+}
+
+/* Avatar Section */
+.avatarContainer {
+  flex-shrink: 0;
+  position: relative;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  background: var(--visa-blue);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(20, 52, 203, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.userIcon {
+  width: 16px;
+  height: 16px;
+  color: var(--visa-white);
+}
+
+/* Animations */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .userMessageContainer {
+    gap: var(--size-scalable-10);
+    margin-bottom: var(--size-scalable-14);
+  }
+
+  .avatar {
+    width: 28px;
+    height: 28px;
+  }
+
+  .userIcon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .messageContent {
+    max-width: 80%;
+  }
+
+  .messageBubble {
+    padding: var(--size-scalable-12) var(--size-scalable-14);
+    border-radius: var(--size-rounded-medium);
+  }
+}
+
+@media (max-width: 480px) {
+  .messageContent {
+    max-width: 85%;
+  }
+
+  .messageBubble {
+    padding: var(--size-scalable-10) var(--size-scalable-12);
+  }
+}
+
+/* Dark mode support (if needed later) */
+@media (prefers-color-scheme: dark) {
+  .avatar {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}

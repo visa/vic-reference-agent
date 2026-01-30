@@ -1,0 +1,87 @@
+/* © 2026 Visa.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/* Log Entry */
+.logEntry {
+  display: flex;
+  flex-direction: column;
+  padding: var(--size-scalable-8) var(--size-scalable-16);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* Log Section */
+.logSection {
+  margin: 2px 0;
+  font-family: monospace;
+  word-break: break-word;
+  display: flex;
+  align-items: first baseline;
+  text-align: left;
+}
+
+.logSection.jsonSection {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* Log Label */
+.logLabel {
+  color: var(--palette-default-text-subtle);
+  margin-right: var(--size-scalable-10);
+  min-width: 100px;
+  flex-shrink: 0;
+  text-align: left;
+}
+
+.logLabel strong {
+  color: var(--palette-default-text-subtle);
+  font-size: 0.9rem;
+  margin-bottom: 0;
+}
+
+/* Log Value */
+.logValue {
+  flex: 1;
+  white-space: pre-wrap;
+  color: var(--palette-default-text);
+  font-family: monospace;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  text-align: left;
+}
+
+.logValue p {
+  margin-bottom: 0;
+}
+
+/* JSON Content */
+.logJsonContent {
+  background: #2d2d2d;
+  color: #f8f8f2;
+  padding: var(--size-scalable-12);
+  border-radius: var(--size-rounded-medium);
+  overflow-x: auto;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  max-height: 400px;
+  overflow-y: auto;
+  margin: var(--size-scalable-4) 0 0 0;
+  width: 100%;
+  text-align: left;
+}
+
+.logJsonContent code {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  background: none;
+  padding: 0;
+}

@@ -1,0 +1,434 @@
+/* © 2026 Visa.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/* ProductCard CSS Module - Reference Design Style */
+
+/* Main Card Container */
+.productCard {
+  flex: 0 0 auto;
+  width: 240px;
+  margin-bottom: var(--size-scalable-12);
+  animation: slideInUp 0.3s ease-out;
+}
+
+.card {
+  background: #ffffff !important;
+  border: 1px solid var(--palette-default-border) !important;
+  border-radius: var(--size-rounded-medium) !important;
+  box-shadow: var(--elevation-small) !important;
+  transition: all 0.2s ease !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  min-height: 320px;
+  max-height: 370px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Fixed height when expanded (showing quantity controls) */
+.card.expanded {
+  height: 370px !important;
+  min-height: 370px !important;
+  max-height: 370px !important;
+}
+
+.card:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: var(--elevation-medium) !important;
+}
+
+/* Image Section */
+.imageContainer {
+  position: relative;
+  width: 100%;
+  height: 140px;
+  overflow: hidden;
+  background: #f9fafb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.productImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.2s ease;
+}
+
+.card:hover .productImage {
+  transform: scale(1.02);
+}
+
+/* Card Content */
+.cardContent {
+  padding: var(--size-scalable-16) !important;
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-scalable-8);
+  flex: 1; /* Takes remaining space after image */
+}
+
+/* Product Title */
+.productTitle {
+  text-align: left;
+  padding-left: 1%;
+  color: var(--palette-default-text) !important;
+  line-height: 1.3 !important;
+  margin: 0 !important;
+  margin-bottom: 0 !important;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Product Description */
+.productDescription {
+  text-align: left;
+  padding-left: 1%;
+  color: var(--palette-default-text-subtle);
+  line-height: 1.4;
+  margin: 0;
+  margin-bottom: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 2.8em;
+}
+
+/* Price Section */
+.priceSection {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin: var(--size-scalable-4) 0 var(--size-scalable-8) 0;
+}
+
+.productPrice {
+  color: var(--palette-default-text);
+  padding: var(--size-scalable-6) var(--size-scalable-12);
+  border: 1px solid var(--palette-default-border);
+  border-radius: var(--size-rounded-small);
+  background: var(--palette-default-surface-subtle);
+  margin: 0;
+  margin-bottom: 0;
+}
+
+/* Action Section */
+.actionSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-scalable-8);
+  margin-top: auto; /* This pushes the buttons to the bottom */
+}
+
+/* Price and Button Row */
+.priceAndButtonRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--size-scalable-12);
+}
+
+/* Accept/Add Button */
+.acceptButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--v-size-scalable-6);
+  padding: var(--v-size-scalable-8) var(--v-size-scalable-12);
+  border: none;
+  border-radius: var(--size-rounded-small);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--visa-blue);
+  color: var(--visa-white);
+  box-shadow: 0 1px 2px rgba(20, 52, 203, 0.1);
+  flex: 1;
+}
+
+.buttonText {
+  margin: 0;
+  margin-bottom: 0;
+  color: inherit;
+}
+
+.acceptButton:hover {
+  background: #0f2a8f;
+  box-shadow: 0 2px 4px rgba(20, 52, 203, 0.2);
+  transform: translateY(-1px);
+}
+
+.acceptButton:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(20, 52, 203, 0.1);
+}
+
+.acceptButton.accepted {
+  background: #10b981;
+  color: white;
+  box-shadow: 0 1px 2px rgba(16, 185, 129, 0.1);
+}
+
+.acceptButton.accepted:hover {
+  background: #059669;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
+
+.buttonIcon {
+  width: 12px;
+  height: 12px;
+  margin-right: 4px;
+}
+
+/* Quantity Controls */
+.quantityControls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--size-scalable-8);
+  padding: var(--size-scalable-6) var(--size-scalable-8);
+  background: var(--palette-default-surface-subtle);
+  border-radius: var(--size-rounded-small);
+  border: 1px solid var(--palette-default-border);
+}
+
+.quantityButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--size-rounded-small);
+  background: #ffffff;
+  color: var(--palette-default-text-subtle);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--elevation-low);
+}
+
+.quantityButton:hover:not(:disabled) {
+  background: var(--visa-blue);
+  color: white;
+  box-shadow: 0 1px 3px rgba(20, 52, 203, 0.2);
+}
+
+.quantityButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: #f3f4f6;
+  color: #9ca3af;
+}
+
+.quantityIcon {
+  width: 12px;
+  height: 12px;
+}
+
+.quantityInput {
+  min-width: 40px;
+  max-width: 80px;
+  width: auto;
+  padding: var(--size-scalable-4) var(--size-scalable-6);
+  border: 1px solid var(--palette-default-border);
+  border-radius: var(--size-rounded-small);
+  background: #ffffff;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--palette-default-text);
+  outline: none;
+  transition: all 0.2s ease;
+  appearance: textfield; /* Standard property */
+  -moz-appearance: textfield; /* Firefox */
+  /* Dynamic width based on content with buffer */
+  width: calc(1ch * var(--input-width, 2) + 18px);
+}
+
+/* Hide spinner arrows in WebKit browsers (Chrome, Safari, Edge) */
+.quantityInput::-webkit-outer-spin-button,
+.quantityInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.quantityInput:focus {
+  border-color: var(--visa-blue);
+  box-shadow: 0 0 0 1px rgba(20, 52, 203, 0.1);
+}
+
+/* Animations */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .productCard {
+    width: 240px;
+  }
+
+  .imageContainer {
+    height: 160px;
+  }
+
+  .cardContent {
+    padding: var(--size-scalable-16) !important;
+    gap: var(--size-scalable-10);
+  }
+
+  .acceptButton {
+    padding: var(--size-scalable-10) var(--size-scalable-14);
+  }
+
+  .quantityButton {
+    width: 28px;
+    height: 28px;
+  }
+
+  .quantityInput {
+    width: 45px;
+    padding: var(--size-scalable-6) var(--size-scalable-4);
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .productCard {
+    width: 200px;
+  }
+
+  .imageContainer {
+    height: 140px;
+  }
+
+  .cardContent {
+    padding: var(--size-scalable-12) !important;
+    gap: var(--size-scalable-8);
+  }
+
+  .productDescription {
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    min-height: 2.8em;
+  }
+
+  .acceptButton {
+    padding: var(--size-scalable-8) var(--size-scalable-12);
+  }
+
+  .buttonIcon {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+/* Dark mode support (if needed later) */
+@media (prefers-color-scheme: dark) {
+  .card {
+    background: rgba(0, 0, 0, 0.8) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+  
+  .productTitle {
+    color: var(--visa-white) !important;
+  }
+  
+  .productDescription {
+    color: rgba(255, 255, 255, 0.7);
+  }
+  
+  .imageContainer {
+    background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+  }
+  
+  .quantityControls {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .quantityButton {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--visa-white);
+  }
+  
+  .quantityInput {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--visa-white);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+}
+
+/* Accepted Overlay - covers only the image */
+.acceptedOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(30, 64, 175, 0.85); /* Dark blue with transparency */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeInOverlay 0.3s ease-out;
+  z-index: 2;
+}
+
+.checkmarkContainer {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: scaleInCheckmark 0.4s ease-out 0.1s both;
+}
+
+.checkmarkIcon {
+  width: 24px;
+  height: 24px;
+  color: #1e40af; /* Dark blue */
+  stroke-width: 3;
+}
+
+/* Animations */
+@keyframes fadeInOverlay {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleInCheckmark {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

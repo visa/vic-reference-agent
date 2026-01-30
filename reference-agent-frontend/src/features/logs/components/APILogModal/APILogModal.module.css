@@ -1,0 +1,109 @@
+/* © 2026 Visa.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/* Modal Overlay */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+}
+
+/* Dialog */
+.dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 800px;
+  width: 90%;
+  min-width: 600px;
+  z-index: 1001;
+  margin: 0 !important; /* Override Nova Dialog's default margin */
+}
+
+/* Dialog Content */
+.dialogContent {
+  padding: 0;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+/* Log Summary Header */
+.logSummaryHeader {
+  padding: var(--size-scalable-16);
+  background: var(--palette-default-surface-subtle);
+  border: 1px solid var(--palette-default-border);
+  border-radius: var(--size-rounded-medium);
+  margin-bottom: var(--size-scalable-16);
+}
+
+.logSummaryContent {
+  display: flex;
+  align-items: center;
+  gap: var(--size-scalable-12);
+  flex-wrap: wrap;
+}
+
+.logSummaryContent .method {
+  flex-shrink: 0;
+  font-weight: 600;
+  margin-bottom: 0;
+}
+
+.logSummaryContent .url {
+  flex: 1;
+  min-width: 200px;
+  font-family: monospace;
+  word-break: break-all;
+  margin-bottom: 0;
+}
+
+.logSummaryContent .timestamp {
+  flex-shrink: 0;
+  white-space: nowrap;
+  margin-bottom: 0;
+}
+
+.separator {
+  color: var(--palette-default-border);
+  flex-shrink: 0;
+  font-size: 12px;
+}
+
+/* Log Message Container */
+.logMessageContainer {
+  padding: var(--size-scalable-16);
+  max-height: 60vh;
+  overflow-y: auto;
+  border: 1px solid var(--palette-default-border);
+  border-radius: var(--size-rounded-medium);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .dialog {
+    width: 95%;
+    min-width: auto;
+  }
+
+  .logSummaryContent {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--size-scalable-8);
+  }
+
+  .separator {
+    display: none;
+  }
+}

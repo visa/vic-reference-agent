@@ -1,0 +1,83 @@
+# © 2026 Visa.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+services:
+  reference-merchant-backend:
+    build:
+      context: ./reference-merchant-backend
+      dockerfile: Dockerfile
+    container_name: reference-merchant-backend
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./reference-merchant-backend/data:/app/data
+    networks:
+      - vic-reference-agent-network
+    restart: unless-stopped
+
+  reference-merchant-mcp:
+    build:
+      context: ./reference-merchant-mcp
+      dockerfile: Dockerfile
+    container_name: reference-merchant-mcp
+    ports:
+      - "8002:8002"
+    environment:
+      - API_BASE_URL=http://reference-merchant-backend:8001
+    depends_on:
+      - reference-merchant-backend
+    networks:
+      - vic-reference-agent-network
+    restart: unless-stopped
+
+  reference-agent-backend:
+    build:
+      context: ./reference-agent-backend
+      dockerfile: Dockerfile
+    container_name: reference-agent-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - MERCHANT_MCP_URL=http://reference-merchant-mcp:8002/mcp
+    volumes:
+      - ./reference-agent-backend/data:/app/data
+    depends_on:
+      - reference-merchant-mcp
+    networks:
+      - vic-reference-agent-network
+    restart: unless-stopped
+
+  reference-merchant-frontend:
+    build:
+      context: ./reference-merchant-frontend
+      dockerfile: Dockerfile
+    container_name: reference-merchant-frontend
+    ports:
+      - "3001:3001"
+    depends_on:
+      - reference-merchant-backend
+    networks:
+      - vic-reference-agent-network
+    restart: unless-stopped
+
+  reference-agent-frontend:
+    build:
+      context: ./reference-agent-frontend
+      dockerfile: Dockerfile
+    container_name: reference-agent-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - reference-agent-backend
+    networks:
+      - vic-reference-agent-network
+    restart: unless-stopped
+
+networks:
+  vic-reference-agent-network:
+    driver: bridge

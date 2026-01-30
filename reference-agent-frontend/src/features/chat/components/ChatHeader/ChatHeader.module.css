@@ -1,0 +1,243 @@
+/* © 2026 Visa.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/* ChatHeader CSS Module */
+
+/* Main Header Container */
+/* START GENAI */
+.header {
+  background: linear-gradient(135deg, var(--visa-blue) 0%, #0f2a8f 100%);
+  color: var(--visa-white);
+  padding: var(--size-scalable-24);
+  box-shadow: var(--elevation-medium);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--size-scalable-16);
+  border-bottom: 1px solid rgba(15, 42, 143, 0.3);
+  position: relative;
+}
+
+.header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(to bottom, rgba(15, 42, 143, 0.15), transparent);
+}
+/* END GENAI */
+
+/* Left Section - Bot Info */
+.leftSection {
+  display: flex;
+  align-items: center;
+  gap: var(--size-scalable-16);
+  flex: 1;
+}
+
+.avatarContainer {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  background: white;
+  backdrop-filter: blur(8px);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.botIcon {
+  width: 32px;
+  height: 32px;
+  color: var(--visa-white);
+}
+
+.statusIndicator {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 16px;
+  height: 16px;
+  background: #10b981;
+  border: 2px solid var(--visa-white);
+  border-radius: 50%;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.textInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--size-scalable-2);
+}
+
+.title {
+  margin: 0;
+  color: var(--visa-white);
+  line-height: 1.2;
+  text-align: left;
+}
+
+.subtitle {
+  display: flex;
+  align-items: center;
+  gap: var(--size-scalable-8);
+}
+
+.subtitleText {
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 0;
+}
+
+.sparklesIcon {
+  width: 16px;
+  height: 16px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Right Section - Cart Summary */
+.cartSummary {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  border-radius: var(--size-rounded-medium);
+  padding: var(--size-scalable-8) var(--size-scalable-12);
+  flex-shrink: 0;
+}
+
+.cartInfo {
+  display: flex;
+  align-items: center;
+  gap: var(--size-scalable-8);
+  color: var(--visa-white);
+}
+
+.cartIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.cartCount {
+  white-space: nowrap;
+  color: var(--visa-white);
+  margin-bottom: 0;
+}
+
+.totalBadge {
+  background: var(--visa-white) !important;
+  color: var(--visa-blue) !important;
+  margin-left: var(--size-scalable-8);
+  border: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .header {
+    padding: var(--size-scalable-16);
+    gap: var(--size-scalable-12);
+  }
+
+  .leftSection {
+    gap: var(--size-scalable-12);
+  }
+
+  .avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .botIcon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .cartSummary {
+    padding: var(--size-scalable-8) var(--size-scalable-12);
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: var(--size-scalable-12);
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--size-scalable-12);
+  }
+
+  .leftSection {
+    width: 100%;
+  }
+
+  .cartSummary {
+    align-self: flex-end;
+  }
+
+  .subtitleText {
+    display: none;
+  }
+}
+
+/* Hover Effects */
+.cartSummary:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transition: background 0.2s ease;
+}
+
+/* Animation for cart appearing */
+.cartSummary {
+  animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.clearChatBtn {
+  background-color: #fff;
+  color: #333 !important;
+  border: 1px solid #d1d5db !important;
+  padding: 0.6rem 0.75rem !important;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.clearChatBtn:hover {
+  background: #e6f0ff;
+  border-color: #a4cafe !important;
+}
+
+.clearChatBtnTxt {
+  margin-bottom: 0;
+}

@@ -1,0 +1,179 @@
+/* © 2026 Visa.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/* BotMessage CSS Module */
+
+/* Main Container */
+.botMessageContainer {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--size-scalable-12);
+  margin-bottom: var(--size-scalable-16);
+  max-width: 100%;
+  animation: slideInLeft 0.3s ease-out;
+}
+
+/* Avatar Section */
+.avatarContainer {
+  flex-shrink: 0;
+  position: relative;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.botIcon {
+  width: 24px;
+  height: 24px;
+  color: var(--visa-blue);
+}
+
+/* Message Content */
+.messageContent {
+  flex: 1;
+  max-width: 60%;
+  min-width: 0;
+}
+
+.messageBubble {
+  background: #ffffff;
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  padding: var(--size-scalable-14) var(--size-scalable-16);
+  box-shadow: var(--elevation-small);
+  border: 1px solid var(--palette-default-border);
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.messageText {
+  margin: 0;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  text-align: left;
+  color: var(--palette-default-text);
+}
+
+.timestamp {
+  margin-top: var(--size-scalable-4);
+  color: var(--palette-default-text-subtle);
+  text-align: right;
+  padding-right: var(--size-scalable-4);
+}
+
+/* Typing Indicator */
+.typingIndicator {
+  display: flex;
+  align-items: center;
+  gap: var(--size-scalable-4);
+  padding: var(--size-scalable-4) 0;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  background: var(--palette-default-text-subtle);
+  border-radius: 50%;
+  animation: typingDot 1.4s infinite ease-in-out;
+}
+
+.dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 0s;
+}
+
+/* Animations */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes typingDot {
+  0%, 80%, 100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .botMessageContainer {
+    gap: var(--size-scalable-10);
+    margin-bottom: var(--size-scalable-14);
+  }
+
+  .avatar {
+    width: 28px;
+    height: 28px;
+  }
+
+  .botIcon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .messageContent {
+    max-width: 65%;
+  }
+
+  .messageBubble {
+    padding: var(--size-scalable-12) var(--size-scalable-14);
+    border-radius: var(--size-rounded-medium);
+  }
+}
+
+@media (max-width: 480px) {
+  .messageContent {
+    max-width: 70%;
+  }
+
+  .messageBubble {
+    padding: var(--size-scalable-10) var(--size-scalable-12);
+  }
+}
+
+/* Dark mode support (if needed later) */
+@media (prefers-color-scheme: dark) {
+  .messageBubble {
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .avatar {
+    background: rgba(255, 255, 255, 0.9);
+  }
+}
+/* END GENAI@GHCOPILOT */

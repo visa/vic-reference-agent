@@ -1,0 +1,54 @@
+# © 2026 Visa.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+# Example values used by VDPClient
+USER_ID = "66d4743e-d13b-4f03-a664-6598cbbb8ee0"
+USER_EMAIL = "test@visa.com"
+AGENT_ID = "visaagent"
+AGENT_NAME = "VisaAgent"
+AGENT_URL = "https://visa.com"
+HASH_KEY = "some_hash_key"
+
+# Key pair for POST /cards endpoint
+CARD_DATA_PUBLIC_KEY_STRING="""-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAszUBy+lomxS4GKv28TBy
+wGc2m64VfyOeFYUbVY/KpuxLrr11vIWFR2bbHmFI40o0tnDDyyXMyeS/CRIqiY7E
+voQVDPvvsYY4maZkv6pVd92ga8fufGXWm2qb3ZbHbQGjsZWkrdLeNjlWisKamkUQ
+aCPtIgTRI3TfCMVPerZecqqrcORZzeHMq3gWSu1/9f6A+qZP9n+8IwQ8e0QL6aW3
+McamniBAKEMUM2FYjFQI31b/k3sgslxNw5RRUlNzjwJxVqpOlMxlUEJD3GL3ZwKk
+FDMShQ3jsKxZGnxwj2EKHr5m4Cyn7MPf5JkyiPMttbngTkSOcxRqsNDX3d+/GQlr
+7wIDAQAB
+-----END PUBLIC KEY-----"""
+CARD_DATA_PRIVATE_KEY_STRING="""-----BEGIN PRIVATE KEY-----
+MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQCzNQHL6WibFLgY
+q/bxMHLAZzabrhV/I54VhRtVj8qm7EuuvXW8hYVHZtseYUjjSjS2cMPLJczJ5L8J
+EiqJjsS+hBUM+++xhjiZpmS/qlV33aBrx+58ZdabapvdlsdtAaOxlaSt0t42OVaK
+wpqaRRBoI+0iBNEjdN8IxU96tl5yqqtw5FnN4cyreBZK7X/1/oD6pk/2f7wjBDx7
+RAvppbcxxqaeIEAoQxQzYViMVAjfVv+TeyCyXE3DlFFSU3OPAnFWqk6UzGVQQkPc
+YvdnAqQUMxKFDeOwrFkafHCPYQoevmbgLKfsw9/kmTKI8y21ueBORI5zFGqw0Nfd
+378ZCWvvAgMBAAECggEAGbugKRUNyExkAxGZFsPLi9qbpM837FcY+XjGQWBcdouy
+cm0SMvfuo3TJkhs2HtfQ/0GXW9xvA66tH92pQ1y/iPvpFJbjXFfXA3k5OQHPNAnH
+DLMGM9FhIlVfUaUNDey7rLcS5phDqwBLb7FyByT+WMs6ieAB3Vgy4/eGlNW1yjvU
+EZkBS2LiAgSfKn0hArl6BjCEhhChDpNc89iP5Qs3NguVGIk7bbxVBwIyujsQKSPs
+skvLSY6KU1VPPbz6//SftDudZo/WWaBGq3OJwP9FLBxizwzLzZ5qJeDvEUPfMkIE
+RaJz9/o9IpCt7g1u6MCZ4mCLh6Oc3NLVGyTwQIs8wQKBgQD6FwY0h/a6zox5RpId
+TYZNpLoEiRuyAMNdeWTRm6bNvQiqTPyKZb7LO3oPJs1fFV46PoQCOxizTNesFlLR
+kOrMfk9BA1QBAHRw938VE/GIj4xSf18T3EWqfm9+205IUosedZMN+4LRaMum/jKP
+iLuKkuEwRA5fnRARMdpWBVV0hQKBgQC3cSklznktcMw+OqWAHTG0r85C1VkcEsEa
+AVv4bebuEHxlGbDEu0ThgWQoDU2B/oamHWKL7lP2+ecDKmex0UWSeACfGbTUo6CM
+t6L2cLVkVKiqYkHGxNEbc1fj7uWyLfQjkxzuUJ9wgIFKSfQh9gUnlkDSiSTS2GwR
+OjhQoFbS4wKBgQCwGPRKmw513aj2YGXUcllGZN6DARRaU8U9FZSTL7nVluz6Fbmh
+riEZs+ivsI/eCwrNkmWbuIcdAde/mfx5CkT691nRGonVJr/XJ775VZC2qvWQxZVq
+Q6lecycJOV02+cByEzIYH2ivEc6M6OMrRIlh+yjLtrA0TUEaCnOGLL1OjQKBgQCD
+Q8Zd91Fe4shD/1NOSZW35dWCnYgWPpVPNonJS1tkHwfkkG2dWSQA+cXhoyNDUg6n
+738FApWytUBJU56/7zAJjzVio9JyFmRcTUufbSdfk/Tdd1H6GfxH2FGcGObkiV2Z
+1ztsjOSKbGoX7rNzWch2e14HSXvAJH2wFikWCKYYYQKBgQDVLIjA6/vxiI7N88ZQ
+R+/08RDiQyIyCDvynnWrdt2Rcg3QqbH/MT0jlcAeTTzFAMbdMnnUhYunVP73mGcC
+xUeBA+ouf3KBn7oIALSNcYPhK4+BEt/vN8JiuqKsxao9wxwpcHdoGQohHQinVrpY
+LHr4LXGuVPoG1mO/RbhvXOcWcA==
+-----END PRIVATE KEY-----"""

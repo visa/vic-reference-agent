@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.git/
+.gitignore
+README.md
+SETUP.md
+Dockerfile
+.DS_Store

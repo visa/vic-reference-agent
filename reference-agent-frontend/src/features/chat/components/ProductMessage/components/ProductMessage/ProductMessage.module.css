@@ -1,0 +1,110 @@
+/* © 2026 Visa.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/* ProductMessage CSS Module - Standalone Product Cards */
+
+/* Main Product Container - Standalone */
+.productContainer {
+  width: calc(100% - 44px); /* Account for margin-left */
+  max-width: calc(100% - 44px);
+  margin-bottom: var(--size-scalable-16);
+  margin-left: 44px; /* Align with BotMessage content (avatar + gap) */
+  animation: slideInLeft 0.4s ease-out;
+}
+
+/* Product List Container */
+.productList {
+  display: flex;
+  overflow-x: auto;
+  overflow-y: visible; /* Don't create vertical scroll context */
+  gap: var(--size-scalable-16);
+  padding: var(--size-scalable-8) var(--size-scalable-4);
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(20, 52, 203, 0.3) transparent;
+  /* Allow vertical scroll events to bubble to parent */
+  overscroll-behavior-y: auto;
+  /* Ensure smooth interaction with parent scroll */
+  touch-action: pan-y pan-x;
+}
+
+/* Webkit scrollbar styling */
+.productList::-webkit-scrollbar {
+  height: 6px;
+}
+
+.productList::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.productList::-webkit-scrollbar-thumb {
+  background: rgba(20, 52, 203, 0.3);
+  border-radius: 3px;
+  transition: background 0.3s ease;
+}
+
+.productList::-webkit-scrollbar-thumb:hover {
+  background: rgba(20, 52, 203, 0.5);
+}
+
+/* Animations */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .productContainer {
+    width: calc(100% - 40px); /* Account for adjusted margin */
+    max-width: calc(100% - 40px);
+    margin-left: 40px; /* Adjust for smaller avatar */
+    margin-bottom: var(--size-scalable-14);
+  }
+
+  .productList {
+    gap: var(--size-scalable-12);
+    padding: var(--size-scalable-6) var(--size-scalable-2);
+  }
+}
+
+@media (max-width: 480px) {
+  .productContainer {
+    width: calc(100% - 36px); /* Account for adjusted margin */
+    max-width: calc(100% - 36px);
+    margin-left: 36px; /* Adjust for smallest avatar */
+    margin-bottom: var(--size-scalable-12);
+  }
+
+  .productList {
+    gap: var(--size-scalable-10);
+    padding: var(--size-scalable-4) var(--size-scalable-1);
+  }
+}
+
+/* Animation for product list appearing */
+.productList {
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

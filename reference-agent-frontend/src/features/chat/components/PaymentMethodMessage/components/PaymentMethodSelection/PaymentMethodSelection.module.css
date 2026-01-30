@@ -1,0 +1,215 @@
+/* © 2026 Visa.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/* Payment Method Message Container */
+.paymentMethodContainer {
+  width: 100%;
+  max-width: 600px;
+  margin-bottom: var(--size-scalable-16);
+  margin-left: 44px; /* Align with BotMessage content (avatar + gap) */
+  animation: slideInLeft 0.4s ease-out;
+}
+
+/* Card Selection Content */
+.cardSelection {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--palette-default-border);
+  border-radius: 16px;
+  padding: var(--size-scalable-24);
+  box-shadow: var(--elevation-medium);
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-scalable-20);
+}
+
+.cardList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-scalable-12);
+}
+
+.cardItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--size-scalable-16);
+  background: var(--palette-default-surface-subtle);
+  border: 1px solid var(--palette-default-border);
+  border-radius: var(--size-rounded-medium);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cardItem:hover {
+  background: var(--palette-default-surface-hover);
+  border-color: var(--visa-blue);
+  transform: translateY(-1px);
+}
+
+.cardItem.selected {
+  background: rgba(26, 31, 113, 0.1);
+  border-color: var(--visa-blue);
+  box-shadow: 0 0 0 2px rgba(26, 31, 113, 0.2);
+}
+
+.cardItem.disabled {
+  opacity: 0.6;
+  cursor: default !important;
+  pointer-events: none;
+}
+
+.cardItem.disabled:hover {
+  background: var(--palette-default-surface-subtle);
+  border-color: var(--palette-default-border);
+  transform: none;
+}
+
+.cardInfo {
+  display: flex;
+  align-items: center;
+  gap: var(--size-scalable-12);
+  flex: 1;
+}
+
+.cardDetails {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-scalable-4);
+}
+
+.cardNumber {
+  color: var(--palette-default-text);
+  letter-spacing: 0.5px;
+  margin: 0;
+  margin-bottom: 0;
+}
+
+.cardType {
+  color: var(--palette-default-text-subtle);
+  text-transform: capitalize;
+  margin: 0;
+  margin-bottom: 0;
+}
+
+.defaultBadge {
+  background: #1A1F71;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Action Buttons */
+.actionButtons {
+  display: flex;
+  gap: var(--size-scalable-12);
+  flex-wrap: wrap;
+}
+
+.addCardButton {
+  display: flex;
+  align-items: center;
+  gap: var(--size-scalable-8);
+  justify-content: center;
+  flex: 1;
+  min-width: 160px;
+  padding: var(--size-scalable-12) var(--size-scalable-20) !important;
+  min-height: 48px;
+  background: rgba(0, 0, 0, 0.05) !important;
+  border: 1px solid rgba(0, 0, 0, 0.2) !important;
+  color: var(--palette-default-text) !important;
+  font-family: var(--typography-body-2-font-family) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+
+.addCardButton:hover {
+  background: rgba(0, 0, 0, 0.1) !important;
+  border-color: rgba(0, 0, 0, 0.3) !important;
+  transform: translateY(-1px);
+}
+
+.continueButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--size-scalable-8);
+  flex: 2;
+  min-width: 180px;
+  padding: var(--size-scalable-12) var(--size-scalable-20) !important;
+  min-height: 48px;
+  background: linear-gradient(135deg, var(--visa-blue) 0%, #0f2a8f 100%) !important;
+  color: white !important;
+  border: none !important;
+  font-family: var(--typography-body-2-font-family) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+.continueButton:hover {
+  background: linear-gradient(135deg, #0f2a8f 0%, var(--visa-blue) 100%) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(20, 52, 203, 0.3) !important;
+}
+
+.buttonIcon {
+  width: 1em;
+  height: 1em;
+}
+
+/* Animations */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .paymentMethodContainer {
+    margin-left: 32px; /* Adjusted for mobile */
+    max-width: calc(100% - 40px);
+  }
+
+  .cardSelection {
+    padding: var(--size-scalable-20);
+  }
+
+  .actionButtons {
+    flex-direction: column;
+  }
+
+  .addCardButton,
+  .continueButton {
+    flex: none;
+    min-width: unset;
+  }
+
+  .cardItem {
+    padding: var(--size-scalable-14);
+  }
+}
+
+@media (max-width: 480px) {
+  .paymentMethodContainer {
+    margin-left: 8px;
+    max-width: calc(100% - 16px);
+  }
+
+  .cardSelection {
+    padding: var(--size-scalable-16);
+  }
+}

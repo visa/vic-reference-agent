@@ -1,0 +1,151 @@
+/* © 2026 Visa.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/* START GENAI@CLAUDE */
+.registerModal {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.registerModal h2,
+.registerModal p {
+  margin-bottom: 0;
+}
+
+.heading {
+  margin-bottom: 1rem;
+}
+/* END GENAI@CLAUDE */
+
+.stepUpOptions {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.stepUpOptionBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  width: 100%;
+}
+
+.stepUpOptionBtn:hover {
+  background-color: #f5f5f5;
+  border-color: #c0c0c0;
+}
+
+.stepUpOptionRadio {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  text-align: left;
+}
+
+.stepUpOptionRadio:hover {
+  background-color: #f5f5f5;
+  border-color: #c0c0c0;
+}
+
+.stepUpOptionRadio input[type="radio"] {
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.stepUpOptionRadio input[type="radio"]:checked + .stepUpOptionContent {
+  font-weight: 500;
+}
+
+.stepUpOptionContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+/* START GENAI@CLAUDE */
+.stepUpOptionMethod {
+  margin-bottom: 4px;
+  text-align: left;
+}
+
+.stepUpOptionValue {
+  text-align: left;
+}
+/* END GENAI@CLAUDE */
+
+/* START GENAI@CLAUDE */
+.codeInputContainer {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.codeInput {
+  width: 100%;
+}
+/* END GENAI@CLAUDE */
+
+/* START GENAI@CLAUDE */
+.errorMessage {
+  margin-top: 8px;
+}
+
+.registerActions {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.registerActions button {
+  border-radius: 8px;
+}
+
+.registerActions button p {
+  margin-bottom: 0;
+}
+
+.registerSubmitBtn {
+  width: 100%;
+}
+
+.registerSecondaryActions {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 16px;
+  gap: 12px;
+}
+
+.registerLinkBtn {
+  padding: 8px 12px;
+}
+
+.modalMessage {
+  margin-bottom: 20px !important;
+  text-align: center;
+}
+/* END GENAI@CLAUDE */

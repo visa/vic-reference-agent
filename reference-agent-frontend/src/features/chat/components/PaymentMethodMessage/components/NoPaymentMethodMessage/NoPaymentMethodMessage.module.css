@@ -1,0 +1,165 @@
+/* © 2026 Visa.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/* NoPaymentMethodMessage CSS Module - Following ProductMessage pattern */
+
+/* Main Payment Method Container - Aligned with other chat components */
+.paymentMethodContainer {
+  width: 100%;
+  max-width: 600px;
+  margin-bottom: 16px;
+  margin-left: 44px; /* Align with BotMessage content (avatar + gap) */
+  animation: slideInLeft 0.4s ease-out;
+}
+
+/* No Cards Message Content */
+.noCardsMessage {
+  background: rgba(255, 165, 0, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 165, 0, 0.3);
+  border-radius: 16px;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: all 0.2s ease;
+}
+
+.noCardsMessage:hover {
+  background: rgba(255, 165, 0, 0.15);
+  border-color: rgba(255, 165, 0, 0.4);
+}
+
+.cardIcon {
+  width: 24px;
+  height: 24px;
+  color: #1A1F71;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 4px rgba(26, 31, 113, 0.2));
+}
+
+.textContent {
+  flex: 1;
+  text-align: left;
+}
+
+.noCardsTitle {
+  color: #CC5500;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+  line-height: 1.4;
+}
+
+.noCardsText {
+  color: #B8460A;
+  font-size: 14px;
+  font-weight: 400;
+  margin: 0;
+  line-height: 1.4;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+.addCardButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: rgba(255, 165, 0, 0.15);
+  border: 1px solid rgba(255, 165, 0, 0.4);
+  border-radius: 8px;
+  color: #CC5500;
+  font-size: 14px;
+  font-weight: 60;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.addCardButton:hover {
+  background: rgba(255, 165, 0, 0.25);
+  border-color: rgba(255, 165, 0, 0.6);
+  color: #B8460A;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(255, 165, 0, 0.2);
+}
+
+.addCardButton:active {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(26, 31, 113, 0.3);
+}
+
+.buttonIcon {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.2s ease;
+}
+
+.addCardButton:hover .buttonIcon {
+  transform: scale(1.1);
+}
+
+/* Animations */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .paymentMethodContainer {
+    margin-left: 32px; /* Adjusted for mobile */
+    max-width: calc(100% - 40px);
+  }
+  
+  .noCardsMessage {
+    padding: 24px 20px;
+  }
+  
+  .cardIcon {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 16px;
+  }
+  
+  .noCardsText {
+    font-size: 15px;
+    margin-bottom: 24px;
+  }
+  
+  .addCardButton {
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+  
+  .buttonIcon {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .paymentMethodContainer {
+    margin-left: 8px;
+    max-width: calc(100% - 16px);
+  }
+  
+  .noCardsMessage {
+    padding: 20px 16px;
+  }
+}

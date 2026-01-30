@@ -1,0 +1,23 @@
+<!-- START GENAI -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <!-- Background -->
+  <rect width="400" height="400" fill="#f0f0f0"/>
+
+  <!-- Image icon -->
+  <g transform="translate(150, 120)">
+    <!-- Frame -->
+    <rect x="0" y="0" width="100" height="80" fill="none" stroke="#999" stroke-width="3" rx="4"/>
+
+    <!-- Mountain/landscape -->
+    <path d="M 10 60 L 30 40 L 50 55 L 70 35 L 90 60 Z" fill="#ccc"/>
+
+    <!-- Sun/circle -->
+    <circle cx="25" cy="25" r="8" fill="#ddd"/>
+  </g>
+
+  <!-- Text -->
+  <text x="200" y="240" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="#999">
+    No Image Available
+  </text>
+</svg>
+<!-- END GENAI -->

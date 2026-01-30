@@ -1,0 +1,80 @@
+/* © 2026 Visa.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/* Modal overlay */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+}
+
+/* Dialog */
+.dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow: auto;
+  z-index: 1001;
+  margin: 0 !important; /* Override Nova Dialog's default margin */
+}
+
+/* Dialog Header */
+.dialogHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Form */
+.form {
+  gap: var(--size-scalable-16);
+}
+
+/* Field Group */
+.fieldGroup {
+  gap: var(--size-scalable-4);
+}
+
+/* Expiration Row */
+.expirationRow {
+  gap: var(--size-scalable-16);
+}
+
+/* Expiration Field */
+.expirationField {
+  flex: 1;
+  gap: var(--size-scalable-4);
+}
+
+/* Card Brand */
+.cardBrand {
+  margin-left: 8px;
+  font-size: 0.875rem;
+  color: var(--palette-default-text-subtle);
+}
+
+/* Error Message */
+.errorMessage {
+  color: var(--palette-default-error);
+}
+
+/* Submit Button */
+.submitButton {
+  align-self: flex-start;
+  margin-top: var(--size-scalable-12);
+}

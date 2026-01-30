@@ -1,0 +1,118 @@
+/* © 2026 Visa.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/* START GENAI@CLAUDE */
+.sidebar {
+  width: 256px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #dee2e6;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  overflow: hidden;
+  padding: 0;
+}
+/* END GENAI@CLAUDE */
+
+.sidebar.closed {
+  width: 0;
+  padding: 0;
+  border-right: none;
+}
+
+.sidebarNav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  overflow: hidden;
+}
+
+.navTitle {
+  padding: 0.75rem 0;
+  margin-bottom: 0.5rem;
+  color: var(--v-color-text-primary);
+}
+
+.navTitle h2 {
+  margin-bottom: 0;
+}
+
+.navItems {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.navLink {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-radius: var(--v-border-radius-medium);
+  text-decoration: none;
+  color: var(--v-color-text-primary);
+  transition: background-color 0.2s;
+}
+
+.navLink:hover {
+  background-color: #e6f0ff !important;
+}
+
+.navLink p {
+  margin-bottom: 0;
+}
+
+.navIcon {
+  width: 20px;
+  height: 20px;
+  margin-right: 0.75rem;
+  flex-shrink: 0;
+}
+
+.togglerWrapper {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 1rem 1rem;
+}
+
+.toggler {
+  position: fixed;
+  bottom: 64px;
+  z-index: 999;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  padding: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.floatingToggler {
+  position: fixed;
+  left: 0;
+  bottom: 64px;
+  z-index: 999;
+  border-radius: 0 20px 20px 0;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.floatingToggler.visible {
+  transform: translateX(0);
+}
+/* END GENAI@CLAUDE */

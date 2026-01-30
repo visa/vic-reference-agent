@@ -1,0 +1,80 @@
+/* © 2026 Visa.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+.buttonContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--size-scalable-8);
+  margin: var(--size-scalable-20) 0;
+}
+
+.verifyButton {
+  display: flex;
+  align-items: center;
+  gap: var(--size-scalable-12);
+  background: linear-gradient(135deg, var(--visa-blue) 0%, #0f2a8f 100%) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: var(--size-rounded-medium);
+  padding: var(--size-scalable-16) var(--size-scalable-24) !important;
+  font-family: var(--typography-body-2-font-family) !important;
+  font-weight: 600 !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: none !important;
+  width: 100%;
+  max-width: 320px;
+  justify-content: center;
+}
+
+.verifyButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0f2a8f 0%, var(--visa-blue) 100%) !important;
+  transform: translateY(-1px);
+}
+
+.verifyButton:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.verifyButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.shieldIcon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.buttonText {
+  font-weight: 600;
+  line-height: 1;
+  margin: 0;
+  margin-bottom: 0;
+  color: inherit;
+}
+
+.securityTag {
+  background: rgba(20, 52, 203, 0.1);
+  border: 1px solid rgba(20, 52, 203, 0.2);
+  border-radius: var(--size-rounded-small);
+  padding: var(--size-scalable-4) var(--size-scalable-12);
+}
+
+.tagText {
+  color: var(--visa-blue);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+  margin-bottom: 0;
+}

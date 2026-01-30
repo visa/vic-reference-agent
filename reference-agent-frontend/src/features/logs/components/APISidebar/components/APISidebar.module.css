@@ -1,0 +1,128 @@
+/* © 2026 Visa.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/* Sidebar Container */
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: -400px;
+  width: 400px;
+  height: 100vh;
+  border-left: 1px solid var(--palette-default-border);
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  transition: right 0.3s ease;
+}
+
+.sidebar.open {
+  right: 0;
+}
+
+/* Sidebar Header */
+.sidebarHeader {
+  padding: var(--size-scalable-16);
+  background: var(--palette-default-surface-subtle);
+  border-bottom: 1px solid var(--palette-default-border);
+  flex-shrink: 0;
+}
+
+.headerContent {
+  gap: var(--size-scalable-12);
+}
+
+.headerContent .v-badge {
+  border: 1px solid var(--palette-default-border);
+}
+
+.headerControls {
+  gap: var(--size-scalable-8);
+}
+
+/* Sidebar Content */
+.sidebarContent {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--size-scalable-16);
+}
+
+/* No Logs */
+.noLogs {
+  text-align: center;
+  color: var(--palette-default-text-subtle);
+  padding: var(--size-scalable-40) var(--size-scalable-20);
+  gap: var(--size-scalable-8);
+}
+
+/* Logs List */
+.logsList {
+  gap: var(--size-scalable-8);
+}
+
+/* Log Item */
+.logItem {
+  cursor: pointer;
+}
+
+/* Log Summary */
+.logSummary {
+  display: flex;
+  align-items: center;
+  gap: var(--size-scalable-12);
+}
+
+.logSummary .method {
+  flex-shrink: 0;
+  font-weight: 600;
+  margin-bottom: 0;
+}
+
+.logSummary .url {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 0;
+}
+
+.logSummary .timestamp {
+  flex-shrink: 0;
+  margin-bottom: 0;
+}
+
+.separator {
+  color: var(--palette-default-border);
+  flex-shrink: 0;
+  font-size: 12px;
+}
+
+/* Loading and Error Indicators */
+.loadingIndicator {
+  color: var(--palette-default-interactive);
+  font-size: 14px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.errorIndicator {
+  color: var(--palette-default-error);
+  font-size: 14px;
+  cursor: help;
+}
+
+.errorText {
+  color: var(--palette-default-error);
+  font-style: italic;
+}

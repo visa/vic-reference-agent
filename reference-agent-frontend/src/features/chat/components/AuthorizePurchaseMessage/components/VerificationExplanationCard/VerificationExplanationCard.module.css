@@ -1,0 +1,66 @@
+/* © 2026 Visa.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+.explanationCard {
+  background: var(--palette-default-surface-subtle);
+  border: 1px solid var(--palette-default-border);
+  border-radius: var(--size-rounded-medium);
+  padding: var(--size-scalable-20);
+  margin: var(--size-scalable-16) 0;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--size-scalable-12);
+  margin-bottom: var(--size-scalable-16);
+}
+
+.infoIcon {
+  width: 20px;
+  height: 20px;
+  color: var(--palette-default-text-subtle);
+  flex-shrink: 0;
+}
+
+.cardTitle {
+  color: var(--palette-default-text);
+  margin: 0;
+  margin-bottom: 0;
+}
+
+.cardContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-scalable-16);
+}
+
+.explanationItem {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--size-scalable-12);
+}
+
+.itemText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-scalable-4);
+}
+
+.itemTitle {
+  color: var(--palette-default-text);
+  line-height: 1.2;
+}
+
+.itemDescription {
+  color: var(--palette-default-text-subtle);
+  line-height: 1.4;
+  margin: 0;
+  margin-bottom: 0;
+}
