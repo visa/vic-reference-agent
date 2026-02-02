@@ -4,7 +4,7 @@ Follow these steps to experience the complete application flow.
 
 > 📹 **Video Walkthrough:** Watch the Demo Video for a complete visual guide. Timestamps are noted for each step below.
 
-[Demo Video](https://github.trusted.visa.com/user-attachments/assets/b6eff266-d334-44fa-a458-ac888b11181c)
+[Demo Video](https://github.com/user-attachments/assets/942e2293-f5fb-432c-8159-4a8a2800d607)
 
 ## Step 1: Add a Payment Card
 
