@@ -4,7 +4,8 @@ Follow these steps to experience the complete application flow.
 
 > 📹 **Video Walkthrough:** Watch the Demo Video for a complete visual guide. Timestamps are noted for each step below.
 
-[Demo Video](https://github.com/user-attachments/assets/942e2293-f5fb-432c-8159-4a8a2800d607)
+[Demo Video](https://github.com/user-attachments/assets/0a30b2f0-7eb4-42ff-82b7-d3a084a0fb4f)
+
 
 ## Step 1: Add a Payment Card
 
@@ -23,7 +24,7 @@ Follow these steps to experience the complete application flow.
 
 ## Step 2: Set Up Passkey
 
-*📹 Demo: 0:19 – 0:56*
+*📹 Demo: 0:19 – 0:52*
 
 1. On the Cards screen, find your newly added card
 2. Click **"Set Up Passkey"**
@@ -38,7 +39,7 @@ Follow these steps to experience the complete application flow.
 
 ## Step 3: Shop with the AI Agent
 
-*📹 Demo: 0:56 – 1:36*
+*📹 Demo: 0:52 – 1:25*
 
 1. Navigate to the **Shop** screen
 2. Start a conversation with the AI shopping agent—for example: *"I'm looking for electronics"*
@@ -51,7 +52,7 @@ Follow these steps to experience the complete application flow.
 
 ## Step 4: Complete Checkout with Passkey
 
-*📹 Demo: 1:36 – 2:23*
+*📹 Demo: 1:25 – 1:58*
 
 1. When you are ready to checkout, click **"Proceed to Checkout"**
 2. Select your payment card
@@ -62,7 +63,7 @@ Follow these steps to experience the complete application flow.
 
 ## Step 5: View API Logs
 
-*📹 Demo: 2:23 – end*
+*📹 Demo: 1:58 – end*
 
 1. Click the **"API Logs"** button in the top-right corner of the application
 2. Click on a request to view its full request and response body
