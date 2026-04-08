@@ -3,11 +3,11 @@ langchain-openai==1.1.10
 langchain-anthropic==1.3.4
 langgraph==1.0.10
 langchain-mcp-adapters==0.2.1
-authlib==1.6.8
+authlib==1.6.9
 fastapi==0.128.0
 uvicorn[standard]==0.23.1    # ASGI server for running FastAPI
 sqlalchemy[asyncio]==2.0.23  # ORM for database interactions
 aiosqlite==0.21.0            # Async SQLite driver
 pydantic[email]==2.7.4       # Data validation and settings management
 python-jose==3.4.0           # JWT handling for authentication
-requests==2.32.4             # HTTP library for downstream service calls
+requests==2.33.0             # HTTP library for downstream service calls

@@ -8,11 +8,11 @@
     "axios": "^1.6.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-router-dom": "6.29.0"
+    "react-router-dom": "6.30.3"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
-    "vite": "^6.0.7"
+    "vite": "^6.4.2"
   },
   "overrides": {
     "@remix-run/router": "1.23.2"
