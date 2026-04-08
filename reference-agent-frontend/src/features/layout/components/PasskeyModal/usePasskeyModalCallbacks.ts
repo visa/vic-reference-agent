@@ -7,11 +7,11 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* START GENAI */
 import { closeModal } from '@/features/layout/slices/modalSlice';
 import { handlePasskeyClose, processPasskeyCompletion } from '@/features/chat/thunks/chatThunks';
 import { useDispatch, useSelector } from 'react-redux';
 import { handlePasskeyProcessComplete } from '@/features/cards/thunks/enrollmentThunks';
+import { clearEnrollingCardId } from '@/features/cards/slices/cardsSlice';
 import { PASSKEY_FLOW_TYPES } from '@/features/passkey/slices/passkeySlice';
 import { initializePasskeyManager } from '@/features/passkey/slices/passkeySlice';
 import { getClientReferenceId } from '@/utils/passkeyUtils';
@@ -82,10 +82,11 @@ export const usePasskeyModalCallbacks = (): PasskeyModalCallbacks => {
                 console.log("Process complete:", payload);
             };
             break;
-        case 'enrollToken': 
+        case 'enrollToken':
             onClose = () => {
                 console.log("Token enrollment closed by user.");
                 dispatch(closeModal());
+                dispatch(clearEnrollingCardId());
             };
             onProcessComplete = async (payload: PasskeyResult) => {
                 dispatch(closeModal());
@@ -94,7 +95,7 @@ export const usePasskeyModalCallbacks = (): PasskeyModalCallbacks => {
                     console.log("Token enrollment process complete:", payload);
                 } catch (error) {
                     console.error('Failed to complete token enrollment:', error);
-                    // Modal will remain open to show error
+                    dispatch(clearEnrollingCardId());
                 }
             };
             break;       
@@ -108,4 +109,3 @@ export const usePasskeyModalCallbacks = (): PasskeyModalCallbacks => {
     }
     return { onClose, onProcessComplete };
 }
-/* END GENAI */

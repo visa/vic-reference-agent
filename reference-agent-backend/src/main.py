@@ -6,7 +6,6 @@
 #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# START GENAI
 from src.config import settings
 import logging
 from fastapi.responses import JSONResponse
@@ -45,7 +44,6 @@ async def add_vdp_logging_middleware(request: Request, call_next):
     response_body = b''.join(chunks)
     logs = request.state.logs if hasattr(request.state, 'logs') else []
     if logs and response.headers.get('Content-Type') == 'application/json':
-        # START GENAI@GHCOPILOT
         try:
             if response_body:
                 data = json.loads(response_body)
@@ -63,7 +61,6 @@ async def add_vdp_logging_middleware(request: Request, call_next):
         except json.JSONDecodeError:
             # If response isn't valid JSON, don't add logs
             pass
-        # END GENAI@GHCOPILOT
     return Response(
         content=response_body,
         status_code=response.status_code,
@@ -87,4 +84,3 @@ app.include_router(passkey.router, prefix="/passkey", tags=["passkey"])
 app.include_router(tokens.router, prefix="/tokens", tags=["tokens"])
 app.include_router(chat.router, prefix="/chat", tags=["chats"])
 
-# END GENAI

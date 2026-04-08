@@ -7,11 +7,15 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* START GENAI */
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import Modal from '@/features/layout/components/Modal/Modal';
-import { Typography, ProgressCircular } from '@visa/nova-react';
+import {
+    Dialog,
+    DialogContent,
+    DialogCloseButton,
+    Typography,
+    ProgressCircular
+} from '@visa/nova-react';
 import { attestationOptionsAuthenticate } from '@/features/passkey/thunks/passkeyAuthenticationThunks';
 import { attestationOptionsRegister } from '@/features/passkey/thunks/passkeyRegistrationThunks';
 import {
@@ -98,17 +102,23 @@ const PasskeyManager: React.FC = () => {
     return (
         <>
             {isLoading && (
-                <Modal onClose={handleLoadingClose} closeOnOverlayClick={false} customContentClassName={styles.modalContentCustom}>
-                    <div className={styles.loadingContent}>
-                        <ProgressCircular progressSize="large" indeterminate />
-                        <Typography variant="headline-4" tag="h2" className={styles.loadingTitle}>
-                            Setting Up Passkey Authentication
-                        </Typography>
-                        <Typography variant="body-2" className={styles.loadingDescription}>
-                            Preparing secure authentication and connecting to passkey services...
-                        </Typography>
-                    </div>
-                </Modal>
+                <>
+                    <div className={styles.modalOverlay} />
+                    <Dialog open className={styles.dialog}>
+                        <DialogContent>
+                            <div className={styles.loadingContent}>
+                                <ProgressCircular progressSize="large" indeterminate />
+                                <Typography variant="headline-4" tag="h2" className={styles.loadingTitle}>
+                                    Setting Up Passkey Authentication
+                                </Typography>
+                                <Typography variant="body-2" className={styles.loadingDescription}>
+                                    Preparing secure authentication and connecting to passkey services...
+                                </Typography>
+                            </div>
+                        </DialogContent>
+                        <DialogCloseButton onClick={handleLoadingClose} />
+                    </Dialog>
+                </>
             )}
             <IframeManager />
             {showRegisterModal && <RegisterModal />}
@@ -118,4 +128,3 @@ const PasskeyManager: React.FC = () => {
 };
 
 export default PasskeyManager;
-/* END GENAI */

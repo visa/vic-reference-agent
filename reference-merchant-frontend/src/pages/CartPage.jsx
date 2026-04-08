@@ -54,13 +54,11 @@ const CartPage = () => {
         <div style={styles.cartItems}>
           {cart.items.map(item => (
             <div key={item.id} style={styles.cartItem}>
-              {/* START GENAI */}
               <img
                 src={item.product.image_url || '/images/placeholder-product.svg'}
                 alt={item.product.name}
                 style={styles.itemImage}
               />
-              {/* END GENAI */}
               <div style={styles.itemDetails}>
                 <h3 style={styles.itemName}>{item.product.name}</h3>
                 <p style={styles.itemPrice}>${item.product.price.toFixed(2)} each</p>

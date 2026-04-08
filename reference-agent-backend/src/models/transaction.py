@@ -13,7 +13,6 @@ from src.enums import TransactionStatus
 from src.models.base import Base
 
 
-# START GENAI@GHCOPILOT
 class Transaction(Base):
     __tablename__ = 'TRANSACTIONS'
 
@@ -48,4 +47,3 @@ class Transaction(Base):
         self.status = status
         if id is not None:
             self.id = id
-# END GENAI@GHCOPILOT

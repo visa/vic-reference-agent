@@ -6,7 +6,6 @@
 #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# START GENAI
 from contextlib import asynccontextmanager
 from uuid import UUID, uuid4
 from fastapi import FastAPI
@@ -17,9 +16,9 @@ from langchain.chat_models import init_chat_model
 from mcp import ClientSession
 from mcp.shared.context import RequestContext
 from mcp.types import INTERNAL_ERROR, ElicitRequestParams, ElicitResult, ErrorData
-from langgraph.prebuilt.chat_agent_executor import create_react_agent
+from langchain.agents import create_agent
 from langgraph.checkpoint.memory import InMemorySaver
-from langchain.schema.runnable import RunnableConfig
+from langchain_core.runnables import RunnableConfig
 import json
 
 from src.config import settings
@@ -72,10 +71,10 @@ async def lifespan(app: FastAPI):
                 base_url=settings.llm_base_url,
                 http_async_client=httpx.AsyncClient(verify=False)
             )
-            agent = create_react_agent(
+            agent = create_agent(
                 model=model,
                 tools=tools,
-                prompt=AGENT_PROMPT,
+                system_prompt=AGENT_PROMPT,
                 checkpointer=InMemorySaver()
             )
             yield

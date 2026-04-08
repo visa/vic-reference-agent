@@ -11,6 +11,10 @@ from uuid import uuid4
 
 from fastapi import HTTPException, status
 from src.enums import IntentStatus, TransactionStatus
+from src.utils.constants import (
+    THREE_DAYS_SECONDS, DEFAULT_MERCHANT_URL, DEFAULT_COUNTRY_CODE,
+    DEFAULT_INTENT_DESCRIPTION, TRANSACTION_STATUS_APPROVED, TRANSACTION_STATUS_DECLINED
+)
 from src.models.intent import Intent
 from src.models.mandate import Mandate
 from src.models.transaction import Transaction
@@ -59,7 +63,7 @@ class CommerceService:
         
         # Create intent in VIC
         mandate_id = uuid4()
-        effective_until_time = int(time.time()) + 3 * 86400  # 3 days from now
+        effective_until_time = int(time.time()) + THREE_DAYS_SECONDS
         intent_response = self.vdp_client.create_intent(
             provisioned_token_id=agentic_checkout_request.provisioned_token_id,
             mandate_id=str(mandate_id),
@@ -93,7 +97,7 @@ class CommerceService:
             amount=str(agentic_checkout_request.amount),
             currency_code=agentic_checkout_request.currency_code,
             effective_until_time=effective_until_time,
-            description=agentic_checkout_request.prompt or "Agentic Intent"
+            description=agentic_checkout_request.prompt or DEFAULT_INTENT_DESCRIPTION
         )
         await self.mandate_repo.add(mandate)
         await self.intent_repo.commit()
@@ -105,8 +109,8 @@ class CommerceService:
                 transaction_currency_code=agentic_checkout_request.currency_code
             ),
             merchant_name=agentic_checkout_request.prompt or "",
-            merchant_country_code="US",
-            merchant_url="http://localhost:8000",
+            merchant_country_code=DEFAULT_COUNTRY_CODE,
+            merchant_url=DEFAULT_MERCHANT_URL,
             mandate_id=mandate.id
         )
         credentials_response = self.vdp_client.retrieve_credentials(
@@ -135,8 +139,8 @@ class CommerceService:
                 amount=str(agentic_checkout_request.amount),
                 currency_code=agentic_checkout_request.currency_code,
                 merchant_name=agentic_checkout_request.prompt or "",
-                merchant_url="http://localhost:8000",
-                merchant_country_code="US"
+                merchant_url=DEFAULT_MERCHANT_URL,
+                merchant_country_code=DEFAULT_COUNTRY_CODE
             )
         )
         await self.transaction_repo.commit()
@@ -151,7 +155,7 @@ class CommerceService:
             dynamic_data_id=payment_credentials[0].get("dynamicDataId"),
             amount=str(agentic_checkout_request.amount),
             currency_code=agentic_checkout_request.currency_code,
-            transaction_status="APPROVED" if checkout_response.purchase_summary else "DECLINED",
+            transaction_status=TRANSACTION_STATUS_APPROVED if checkout_response.purchase_summary else TRANSACTION_STATUS_DECLINED,
             order_id=checkout_response.purchase_summary.order_id if checkout_response.purchase_summary else None
         )
 

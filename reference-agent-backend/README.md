@@ -1,4 +1,3 @@
-<!-- START GENAI -->
 # Reference Agent Backend
 
 > FastAPI backend with AI shopping agent powered by Visa Intelligent Commerce
@@ -216,4 +215,3 @@ See `src/services/agent.py` for the agent implementation and prompt.
 ## Support
 
 For issues and questions, please open an issue in the repository.
-<!-- END GENAI -->

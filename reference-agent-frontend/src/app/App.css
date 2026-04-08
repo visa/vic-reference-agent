@@ -7,7 +7,6 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* START GENAI@CLAUDE */
 .App {
   text-align: center;
   font-family: var(--typography-font-family);
@@ -27,9 +26,7 @@
     contain: layout style paint;
   }
 }
-/* END GENAI@CLAUDE */
 
-/* START GENAI@CLAUDE */
 .App-body {
   display: grid;
   grid-template-columns: auto 1fr;
@@ -38,9 +35,7 @@
   position: relative;
   background-color: var(--v-color-surface-primary, #ffffff);
 }
-/* END GENAI@CLAUDE */
 
-/* START GENAI@CLAUDE */
 .App-main {
   display: flex;
   justify-content: center;
@@ -53,7 +48,6 @@
   contain: layout style;
   overflow-y: auto;
 }
-/* END GENAI@CLAUDE */
 
 .app-container {
   display: flex;

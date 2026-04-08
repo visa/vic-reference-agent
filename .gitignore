@@ -1,3 +1,7 @@
 .DS_Store
 .vscode/
 .idea/
+__pycache__/
+docker-compose.override.yml
+pip.conf
+pip.crt

@@ -7,7 +7,6 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* START GENAI */
 import { combineReducers } from '@reduxjs/toolkit'
 import type { Action } from '@reduxjs/toolkit'
 import cardsReducer from '../features/cards/slices/cardsSlice'
@@ -57,4 +56,3 @@ const appReducer = combineReducers({
 export const rootReducer = appReducer
 
 export type RootState = ReturnType<typeof rootReducer>
-/* END GENAI */

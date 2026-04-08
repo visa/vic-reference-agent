@@ -7,11 +7,27 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* START GENAI@CLAUDE */
 import React, { useState, useEffect, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import Modal from "@/features/layout/components/Modal/Modal";
-import { Button, Typography, Input, InputContainer, InputMessage, Radio, SectionMessage, SectionMessageContent } from "@visa/nova-react";
+import {
+    Dialog,
+    DialogContent,
+    DialogCloseButton,
+    Button,
+    Typography,
+    Input,
+    InputContainer,
+    InputMessage,
+    Label,
+    Radio,
+    RadioPanel,
+    Utility,
+    SectionMessage,
+    SectionMessageContent,
+    SectionMessageIcon,
+    UtilityFragment,
+} from "@visa/nova-react";
+import { VisaChevronRightTiny } from "@visa/nova-icons-react";
 import {
     REGISTER_FLOW_STEPS,
     setRegisterFlowStep,
@@ -23,7 +39,6 @@ import {
 } from "@/features/passkey/slices/passkeySlice";
 import styles from "./RegisterModal.module.css";
 import type { RootState, AppDispatch } from '@/store';
-/* END GENAI@CLAUDE */
 
 // Screen states to manage UI independently from flow steps
 const SCREEN_STATES = {
@@ -83,6 +98,16 @@ const RegisterModal: React.FC = () => {
         dispatch(setRegisterFlowStep(REGISTER_FLOW_STEPS.SOLVE_CHALLENGE));
     };
 
+    const handleCodeInputKeyDown = useCallback(
+        (event: React.KeyboardEvent<HTMLInputElement>) => {
+            if (event.key !== "Enter") return;
+            event.preventDefault();
+            if (!code || isLoading) return;
+            solveChallenge();
+        },
+        [code, isLoading]
+    );
+
     const createPasskey = () => {
         dispatch(setRegisterModalError(null));
         dispatch(triggerPopup());
@@ -100,59 +125,84 @@ const RegisterModal: React.FC = () => {
         return methodMap[method] || method;
     };
 
+    const renderError = () => registerModalError ? (
+        <Utility vPaddingTop={16} className={styles.errorContainer}>
+            <SectionMessage messageType="error" className={styles.errorMessage}>
+                <SectionMessageIcon />
+                <UtilityFragment vPaddingLeft={8} vPaddingBottom={2}>
+                    <SectionMessageContent>
+                        <Typography variant="body-2">{registerModalError}</Typography>
+                    </SectionMessageContent>
+                </UtilityFragment>
+            </SectionMessage>
+        </Utility>
+    ) : null;
+
     const renderStepUpOptionsScreen = () => (
         <>
-            {/* START GENAI@CLAUDE */}
-            <Typography variant="headline-3" tag="h2" className={styles.heading}>
+            <Typography variant="headline-3" tag="h2">
                 Additional Verification Required
             </Typography>
             <Typography variant="body-2" className={styles.modalMessage}>
                 Select a verification method to continue
             </Typography>
-            <div className={styles.stepUpOptions}>
-                {stepUpOptions?.map((option: any, index: number) => (
-                    <label key={index} className={styles.stepUpOptionRadio}>
-                        <Radio
-                            name="stepUpOption"
-                            value={option.identifier}
-                            checked={selectedOption && option.identifier === selectedOption.identifier}
-                            onChange={() => dispatch(setSelectedOption(option))}
-                            disabled={isLoading}
-                        />
-                        <div className={styles.stepUpOptionContent}>
-                            <Typography variant="body-2" className={styles.stepUpOptionMethod}>
-                                {getMethodDisplayName(option.method)}
-                            </Typography>
-                            <Typography variant="body-2" className={styles.stepUpOptionValue}>
-                                {option.value}
-                            </Typography>
-                        </div>
-                    </label>
-                ))}
-            </div>
-            <div className={styles.registerActions}>
+            {renderError()}
+            <fieldset aria-labelledby="step-up-options-legend" className={styles.stepUpOptions}>
+                <Utility vFlex vFlexCol vGap={8}>
+                    {stepUpOptions?.map((option: any, index: number) => (
+                        <RadioPanel
+                            className="v-align-items-start"
+                            htmlFor={`step-up-option-${index}`}
+                            key={`step-up-option-${index}`}
+                        >
+                            <Utility vFlex vGap={2} style={{ inlineSize: '100%' }}>
+                                <Radio
+                                    className="v-flex-shrink-0"
+                                    id={`step-up-option-${index}`}
+                                    name="stepUpOption"
+                                    checked={selectedOption && option.identifier === selectedOption.identifier}
+                                    onChange={() => dispatch(setSelectedOption(option))}
+                                    disabled={isLoading}
+                                />
+                                <Utility vFlex vFlexCol vGap={2} vMarginVertical={6}>
+                                    <Typography variant="body-2" className={styles.stepUpOptionMethod}>
+                                        {getMethodDisplayName(option.method)}
+                                    </Typography>
+                                    <InputMessage id={`step-up-option-${index}-message`}>
+                                        {option.value}
+                                    </InputMessage>
+                                </Utility>
+                            </Utility>
+                        </RadioPanel>
+                    ))}
+                </Utility>
+            </fieldset>
+            <Utility vFlex vAlignItems="center" vGap={12} vPaddingTop={16}>
                 <Button
-                    className={styles.registerSubmitBtn}
                     onClick={createChallenge}
                     disabled={!selectedOption || isLoading}
                 >
-                    <Typography variant="body-2">{isLoading ? "Processing..." : "Continue"}</Typography>
+                    {isLoading ? "Processing..." : "Continue"}
                 </Button>
-            </div>
-            {/* END GENAI@CLAUDE */}
+                <Button
+                    colorScheme="secondary"
+                    onClick={handleClose}
+                    disabled={isLoading}
+                >
+                    Cancel
+                </Button>
+            </Utility>
         </>
     );
 
     const renderChallengeScreen = () => {
-        // Check if the selected method requires a code input
         const requiresCodeInput = selectedOption?.method === "OTPEMAIL" ||
                                  selectedOption?.method === "OTPSMS" ||
                                  selectedOption?.method === "OTPONLINEBANKING";
 
         return (
             <>
-                {/* START GENAI@CLAUDE */}
-                <Typography variant="headline-3" tag="h2" className={styles.heading}>
+                <Typography variant="headline-3" tag="h2">
                     Enter Verification Code
                 </Typography>
                 <Typography variant="body-2" className={styles.modalMessage}>
@@ -169,13 +219,12 @@ const RegisterModal: React.FC = () => {
                     {selectedOption?.method === "OUTBOUNDCALL" &&
                     `You'll receive a call at ${selectedOption.value} to complete the verification process. Once complete, please restart the passkey setup process.`}
                 </Typography>
+                {renderError()}
 
                 {requiresCodeInput ? (
                     <>
-                        <div className={styles.codeInputContainer}>
-                            <Typography variant="label" tag="label" htmlFor="verification-code">
-                                Verification Code
-                            </Typography>
+                        <Utility vFlex vFlexCol vGap={4} style={{ width: '100%' }}>
+                            <Label htmlFor="verification-code">Verification Code</Label>
                             <InputContainer>
                                 <Input
                                     type="text"
@@ -183,6 +232,7 @@ const RegisterModal: React.FC = () => {
                                     placeholder="Enter verification code"
                                     value={code ?? ""}
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => dispatch(setCode(e.target.value))}
+                                    onKeyDown={handleCodeInputKeyDown}
                                     disabled={isLoading}
                                     aria-describedby="verification-code-message"
                                 />
@@ -190,69 +240,78 @@ const RegisterModal: React.FC = () => {
                             <InputMessage id="verification-code-message">
                                 Enter the code sent to you
                             </InputMessage>
-                        </div>
+                        </Utility>
 
-                        <div className={styles.registerActions}>
+                        <Utility vFlex vAlignItems="center" vFlexWrap vGap={12} vPaddingTop={16}>
                             <Button
-                                className={styles.registerSubmitBtn}
                                 onClick={solveChallenge}
                                 disabled={!code || isLoading}
                             >
-                                <Typography variant="body-2">Verify</Typography>
+                                Verify
                             </Button>
-                            <div className={styles.registerSecondaryActions}>
-                                <Button
-                                    className={styles.registerLinkBtn}
-                                    onClick={createChallenge}
-                                    disabled={isLoading}
-                                >
-                                    <Typography variant="body-2">Resend code</Typography>
-                                </Button>
-                                <Button
-                                    className={styles.registerLinkBtn}
-                                    onClick={() => dispatch(setRegisterFlowStep(REGISTER_FLOW_STEPS.SHOW_STEP_UP_OPTIONS))}
-                                    disabled={isLoading}
-                                >
-                                    <Typography variant="body-2">Use different method</Typography>
-                                </Button>
-                            </div>
-                        </div>
+                            <Button
+                                colorScheme="secondary"
+                                onClick={createChallenge}
+                                disabled={isLoading}
+                            >
+                                Resend code
+                            </Button>
+                            <Button
+                                colorScheme="tertiary"
+                                onClick={() => dispatch(setRegisterFlowStep(REGISTER_FLOW_STEPS.SHOW_STEP_UP_OPTIONS))}
+                                disabled={isLoading}
+                            >
+                                Use different method
+                                <VisaChevronRightTiny />
+                            </Button>
+                        </Utility>
                     </>
                 ) : (
-                    <div className={styles.registerActions}>
+                    <Utility vFlex vAlignItems="center" vGap={12} vPaddingTop={16}>
                         <Button
-                            className={styles.registerLinkBtn}
+                            colorScheme="tertiary"
                             onClick={() => dispatch(setRegisterFlowStep(REGISTER_FLOW_STEPS.SHOW_STEP_UP_OPTIONS))}
                             disabled={isLoading}
                         >
-                            <Typography variant="body-2">Use different method</Typography>
+                            Use different method
                         </Button>
-                    </div>
+                        <Button
+                            colorScheme="secondary"
+                            onClick={handleClose}
+                            disabled={isLoading}
+                        >
+                            Cancel
+                        </Button>
+                    </Utility>
                 )}
-                {/* END GENAI@CLAUDE */}
             </>
         );
     };
 
     const renderCreatePasskeyScreen = () => (
         <>
-            {/* START GENAI@CLAUDE */}
             <Typography variant="headline-3" tag="h2" className={styles.heading}>
                 Create Your Passkey
             </Typography>
             <Typography variant="body-2" className={styles.modalMessage}>
                 A passkey provides an easy and secure way to authenticate without using passwords.
             </Typography>
-            <div className={styles.registerActions}>
+            {renderError()}
+            <Utility vFlex vAlignItems="center" vGap={12}>
                 <Button
-                    className={styles.registerSubmitBtn}
                     onClick={createPasskey}
                     disabled={isLoading}
                 >
-                    <Typography variant="body-2">{isLoading ? "Processing..." : "Create Passkey"}</Typography>
+                    {isLoading ? "Processing..." : "Create Passkey"}
                 </Button>
-            </div>
-            {/* END GENAI@CLAUDE */}
+                <Button
+                    colorScheme="secondary"
+                    onClick={handleClose}
+                    disabled={isLoading}
+                >
+                    Cancel
+                </Button>
+            </Utility>
         </>
     );
 
@@ -266,22 +325,19 @@ const RegisterModal: React.FC = () => {
                 return renderCreatePasskeyScreen();
         }
     };
-    
+
     return (
-        <Modal onClose={handleClose} closeOnOverlayClick={false}>
-            <div className={styles.registerModal}>
-                {renderContent()}
-            </div>
-            {/* START GENAI@CLAUDE */}
-            {registerModalError && (
-                <SectionMessage messageType="error" className={styles.errorMessage}>
-                    <SectionMessageContent>
-                        <Typography variant="body-2">{registerModalError}</Typography>
-                    </SectionMessageContent>
-                </SectionMessage>
-            )}
-            {/* END GENAI@CLAUDE */}
-        </Modal>
+        <>
+            <div className={styles.modalOverlay} />
+            <Dialog open className={styles.dialog}>
+                <DialogContent>
+                    <div className={styles.registerModal}>
+                        {renderContent()}
+                    </div>
+                </DialogContent>
+                <DialogCloseButton onClick={handleClose} />
+            </Dialog>
+        </>
     );
 };
 

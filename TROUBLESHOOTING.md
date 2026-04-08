@@ -44,3 +44,34 @@ Common problems and solutions when running the application with Docker Compose.
 - Verify all Visa credentials in backend `.env`
 - Check API logs in the frontend for detailed error messages
 - Ensure you're using CERT environment credentials
+
+## Docker Build Behind Corporate Proxy / Private Registry
+
+If `pip install` fails during the Docker build due to network or SSL issues, the Dockerfiles support optional build secrets for a custom pip configuration and CA certificate.
+
+1. Create a `pip.conf` in the project root with your proxy or registry settings (set `cert = /tmp/pip.crt` to reference the mounted certificate)
+2. Place your corporate CA certificate at `pip.crt` in the project root
+3. Create a `docker-compose.override.yml` to pass the secrets to the build:
+
+```yaml
+services:
+  reference-agent-backend:
+    build:
+      secrets:
+        - pipconf
+        - cacert
+
+  reference-merchant-backend:
+    build:
+      secrets:
+        - pipconf
+        - cacert
+
+secrets:
+  pipconf:
+    file: ./pip.conf
+  cacert:
+    file: ./pip.crt
+```
+
+Then rebuild with `docker compose up --build`. These files are git-ignored and do not require any Dockerfile changes.

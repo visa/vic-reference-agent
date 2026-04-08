@@ -1,4 +1,3 @@
-<!-- START GENAI -->
 # Reference Merchant MCP Server
 
 > MCP (Model Context Protocol) server bridging the Reference Merchant Backend API
@@ -144,4 +143,3 @@ The tool uses **form elicitation** to collect sensitive payment information (car
 ## Support
 
 For issues and questions, please open an issue in the repository.
-<!-- END GENAI -->

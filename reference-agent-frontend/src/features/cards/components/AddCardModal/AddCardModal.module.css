@@ -40,41 +40,121 @@
   align-items: center;
 }
 
+/* Dialog Content - single column layout */
+.dialogContent {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* SectionMessage - full width within dialog content */
+.sectionMessage {
+  width: 100%;
+  max-width: none !important;
+  text-align: left;
+  margin-top: var(--size-scalable-12);
+}
+
 /* Form */
 .form {
   gap: var(--size-scalable-16);
+  margin-top: var(--size-scalable-16);
 }
 
-/* Field Group */
-.fieldGroup {
-  gap: var(--size-scalable-4);
-}
-
-/* Expiration Row */
+/* Expiration Row - all card fields inline */
 .expirationRow {
   gap: var(--size-scalable-16);
 }
 
-/* Expiration Field */
-.expirationField {
-  flex: 1;
-  gap: var(--size-scalable-4);
+/* Card number field - wider */
+.cardNumberField {
+  flex: 2;
 }
 
-/* Card Brand */
-.cardBrand {
-  margin-left: 8px;
-  font-size: 0.875rem;
-  color: var(--palette-default-text-subtle);
+/* Screen reader only - hidden label for accessibility */
+.srOnly {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
 }
 
-/* Error Message */
-.errorMessage {
-  color: var(--palette-default-error);
+/* Expiration date label - base and error states */
+.expDateLabel,
+.labelError {
+  text-align: left;
+}
+
+.labelError {
+  color: var(--palette-messaging-graphics-error, #c41230) !important;
+}
+
+/* Wrapper for each exp field with its message */
+.expFieldWrapper {
+  width: 4rem;
+}
+
+/* Smaller exp date inputs */
+.expInput {
+  width: 4rem;
+}
+
+/* Slash separator - between MM and YY inputs */
+.slashSeparator {
+  font-size: 1.25rem;
+  font-weight: 300;
+  color: #6b7280;
+  line-height: 1;
+  margin-top: 0.5rem;
+}
+
+/* CVV field - small width */
+.cvvField {
+  width: 5rem;
+}
+
+.cvvInput {
+  width: 5rem;
 }
 
 /* Submit Button */
 .submitButton {
-  align-self: flex-start;
-  margin-top: var(--size-scalable-12);
+  width: 100%;
+  margin-top: var(--size-scalable-8);
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  .expirationRow {
+    flex-wrap: wrap;
+    gap: var(--size-scalable-12);
+  }
+
+  .cardNumberField {
+    flex: 1 1 100%;
+  }
+
+  .expDateField {
+    flex: 1 1 60%;
+  }
+
+  .expFieldWrapper {
+    flex: 1;
+  }
+
+  .expInput {
+    width: 100%;
+  }
+
+  .cvvField {
+    flex: 0 0 30%;
+  }
+
+  .cvvInput {
+    width: 100%;
+  }
 }

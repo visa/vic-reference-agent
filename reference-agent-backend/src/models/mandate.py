@@ -12,7 +12,6 @@ from sqlalchemy.orm import Mapped, mapped_column
 from src.enums import MandateStatus
 from src.models.base import Base
 
-# START GENAI@GHCOPILOT
 class Mandate(Base):
     __tablename__ = 'MANDATES'
     
@@ -44,4 +43,3 @@ class Mandate(Base):
         self.status = status
         if id is not None:
             self.id = id
-# END GENAI@GHCOPILOT

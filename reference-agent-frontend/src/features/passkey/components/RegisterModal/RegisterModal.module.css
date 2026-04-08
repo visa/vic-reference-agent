@@ -7,12 +7,35 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* START GENAI@CLAUDE */
+/* Modal overlay */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+}
+
+/* Dialog */
+.dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 420px;
+  width: 90%;
+  z-index: 1001;
+  margin: 0 !important;
+}
+
 .registerModal {
   width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .registerModal h2,
@@ -21,131 +44,32 @@
 }
 
 .heading {
-  margin-bottom: 1rem;
+  margin-bottom: var(--size-scalable-16) !important;
 }
-/* END GENAI@CLAUDE */
+
+.errorContainer {
+  width: 100%;
+}
+
+.errorMessage {
+  width: 100%;
+  max-width: none !important;
+  text-align: left;
+}
 
 .stepUpOptions {
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 20px;
+  border: none;
+  padding: 0;
+  margin: 0;
 }
 
-.stepUpOptionBtn {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 16px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  background-color: white;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-align: left;
-  width: 100%;
-}
-
-.stepUpOptionBtn:hover {
-  background-color: #f5f5f5;
-  border-color: #c0c0c0;
-}
-
-.stepUpOptionRadio {
-  display: flex;
-  align-items: center;
-  padding: 16px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  background-color: white;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  width: 100%;
-  text-align: left;
-}
-
-.stepUpOptionRadio:hover {
-  background-color: #f5f5f5;
-  border-color: #c0c0c0;
-}
-
-.stepUpOptionRadio input[type="radio"] {
-  margin-right: 12px;
-  flex-shrink: 0;
-}
-
-.stepUpOptionRadio input[type="radio"]:checked + .stepUpOptionContent {
-  font-weight: 500;
-}
-
-.stepUpOptionContent {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  text-align: left;
-}
-
-/* START GENAI@CLAUDE */
 .stepUpOptionMethod {
-  margin-bottom: 4px;
+  font-weight: 600;
   text-align: left;
-}
-
-.stepUpOptionValue {
-  text-align: left;
-}
-/* END GENAI@CLAUDE */
-
-/* START GENAI@CLAUDE */
-.codeInputContainer {
-  width: 100%;
-  margin-bottom: 20px;
-}
-
-.codeInput {
-  width: 100%;
-}
-/* END GENAI@CLAUDE */
-
-/* START GENAI@CLAUDE */
-.errorMessage {
-  margin-top: 8px;
-}
-
-.registerActions {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.registerActions button {
-  border-radius: 8px;
-}
-
-.registerActions button p {
-  margin-bottom: 0;
-}
-
-.registerSubmitBtn {
-  width: 100%;
-}
-
-.registerSecondaryActions {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  margin-top: 16px;
-  gap: 12px;
-}
-
-.registerLinkBtn {
-  padding: 8px 12px;
 }
 
 .modalMessage {
-  margin-bottom: 20px !important;
-  text-align: center;
+  margin-bottom: var(--size-scalable-24) !important;
+  text-align: left;
 }
-/* END GENAI@CLAUDE */

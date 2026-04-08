@@ -27,7 +27,6 @@ class Card(Base):
     pan_enrollment_id: Mapped[str] = mapped_column(String(50), unique=True)
     token_id: Mapped[str | None] = mapped_column(String(50), unique=True)
 
-    # START GENAI@GHCOPILOT
     def __init__(
         self,
         last_4: str,
@@ -49,4 +48,3 @@ class Card(Base):
         self.token_id = token_id
         if id is not None:
             self.id = id
-    # END GENAI@GHCOPILOT

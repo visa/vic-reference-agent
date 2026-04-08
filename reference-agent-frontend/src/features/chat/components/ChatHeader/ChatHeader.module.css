@@ -10,7 +10,6 @@
 /* ChatHeader CSS Module */
 
 /* Main Header Container */
-/* START GENAI */
 .header {
   background: linear-gradient(135deg, var(--visa-blue) 0%, #0f2a8f 100%);
   color: var(--visa-white);
@@ -33,7 +32,6 @@
   height: 4px;
   background: linear-gradient(to bottom, rgba(15, 42, 143, 0.15), transparent);
 }
-/* END GENAI */
 
 /* Left Section - Bot Info */
 .leftSection {

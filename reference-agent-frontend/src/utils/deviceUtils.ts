@@ -1,13 +1,4 @@
-/* © 2026 Visa.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
-
-import { UAParser } from 'ua-parser-js';
+import Bowser from 'bowser';
 
 export interface DeviceInfo {
   browser: {
@@ -52,26 +43,25 @@ export const getClientDeviceId = () => {
 };
 
  export const getDeviceInfo = (): DeviceInfo => {
-    const parser = new UAParser();
-    const result = parser.getResult();
-    
+    const parsed = Bowser.parse(navigator.userAgent);
+
     return {
       browser: {
-        name: result.browser.name,
-        version: result.browser.version
+        name: parsed.browser.name,
+        version: parsed.browser.version
       },
       os: {
-        name: result.os.name,
-        version: result.os.version
+        name: parsed.os.name,
+        version: parsed.os.version
       },
       device: {
-        vendor: result.device.vendor,
-        model: result.device.model,
-        type: result.device.type
+        vendor: parsed.platform.vendor,
+        model: parsed.platform.model,
+        type: parsed.platform.type
       },
       engine: {
-        name: result.engine.name,
-        version: result.engine.version
+        name: parsed.engine.name,
+        version: parsed.engine.version
       },
       system: {
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -92,11 +82,11 @@ export const getClientDeviceId = () => {
    *
    * All fields are strings with max 255 characters matching pattern: (?!^[*.,'#_/-]+$)(?!.*\./.*)^.*$
    *
-   * UAParser device types: console, embedded, mobile, smarttv, tablet, wearable, xr
+   * Bowser platform types: desktop, mobile, tablet, tv
    * If device.type is undefined/null, defaults to "Desktop"
    */
   export const mapDeviceInfoForVIC = (deviceInfo: DeviceInfo): VICDeviceData => {
-    // Use device type as-is from UAParser, or default to "Desktop" if undefined/null
+    // Use device type as-is from Bowser, or default to "Desktop" if undefined/null
     const deviceType = deviceInfo.device.type || 'Desktop';
 
     // Extract brand (vendor), defaulting to OS name or "Unknown"

@@ -7,7 +7,6 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* START GENAI */
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Button, Typography } from '@visa/nova-react';
@@ -70,11 +69,9 @@ const QuickActionButton: React.FC<{
     <div className={styles.quickActions}>
       {QUICK_ACTIONS
         .filter(action => 
-          /* START GENAI */
           conversationFlow === 'completed'
             ? action.label === 'Start New Order' 
             : action.label !== 'Start New Order'
-          /* END GENAI */
         )
         .map((action, index) => {
           const IconComponent = action.icon;
@@ -84,13 +81,11 @@ const QuickActionButton: React.FC<{
               type="button"
               className={styles.quickActionButton}
               onClick={() => {
-                /* START GENAI */
                 if (action.handler) {
                   action.handler(dispatch);
                 } else {
                   onQuickAction(action.query);
                 }
-                /* END GENAI */
               }}
               disabled={disabled}
             >
@@ -106,4 +101,3 @@ const QuickActionButton: React.FC<{
 };
 
 export default QuickActionButton;
-/* END GENAI */

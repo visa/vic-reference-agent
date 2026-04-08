@@ -7,38 +7,36 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.loadingOverlay {
+/* Modal overlay */
+.modalOverlay {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
   z-index: 1000;
 }
 
-/* START GENAI@CLAUDE */
-/* Custom modal content styling for this component */
-.modalContentCustom {
-  max-width: 400px !important;
-  width: 95% !important;
-  padding: 0 !important;
+/* Dialog */
+.dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 400px;
+  width: 90%;
+  z-index: 1001;
+  margin: 0 !important;
 }
 
 .loadingContent {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  padding: 48px 24px;
+  gap: var(--size-scalable-16);
+  padding: var(--size-scalable-24) var(--size-scalable-24);
   text-align: center;
 }
 
@@ -55,4 +53,3 @@
   max-width: 300px;
   text-align: center;
 }
-/* END GENAI@CLAUDE */

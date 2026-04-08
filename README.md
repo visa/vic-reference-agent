@@ -1,4 +1,3 @@
-<!-- START GENAI -->
 # Visa Intelligent Commerce Reference Agent
 
 > Reference implementation for Visa Intelligent Commerce with AI-powered shopping agent
@@ -18,6 +17,10 @@ This repository contains a full-fledged reference application demonstrating end-
 - 🔐 **Visa Payment Passkey (VPP)** - WebAuthn passkey authentication for frictionless, secure checkout
 - 🤖 **AI Shopping Agent** - Conversational product search and personalized recommendations using LangGraph
 - 🔌 **Model Context Protocol (MCP)** - Tool-based AI interactions for seamless shopping experiences
+
+### Network Support
+
+**Note:** VIC (Visa Intelligent Commerce) is Visa card network centric. This reference implementation is designed specifically for the Visa card network and does not support other payment card networks.
 
 ## Architecture
 
@@ -81,6 +84,8 @@ Contact your Visa representative to obtain:
 
 You will also need:
 - LLM API credentials (OpenAI or Anthropic) for the AI agent
+
+**Important:** Developers must obtain their own LLM provider credentials separately. The LLM API credentials (OpenAI or Anthropic) are not Visa API credentials and must be acquired directly from the respective LLM providers.
 
 ## Quick Start
 
@@ -196,4 +201,3 @@ Having issues? See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for common problems 
 For issues and questions, please open an issue in the repository.
 
 For Visa API credentials and support, contact your Visa representative.
-<!-- END GENAI -->

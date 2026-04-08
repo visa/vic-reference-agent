@@ -29,7 +29,6 @@ class Intent(Base):
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
-    # START GENAI@GHCOPILOT
     def __init__(
         self,
         instruction_id: str,
@@ -46,4 +45,3 @@ class Intent(Base):
         self.status = status
         if id is not None:
             self.id = id
-    # END GENAI@GHCOPILOT

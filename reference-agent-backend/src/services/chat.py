@@ -6,10 +6,9 @@
 #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# START GENAI
 import logging
 from typing import List
-from langchain.schema import HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage, SystemMessage
 from src.repositories.card import CardRepository
 from src.schemas.chat import ChatResponse, ProductInput
 from src.schemas.commerce import AgenticCheckoutResponse, Credentials
@@ -55,4 +54,3 @@ class ChatService:
             raise RuntimeError("An error occurred while completing the checkout. Please try again later.")
         finally:
             clear_credentials()
-# END GENAI

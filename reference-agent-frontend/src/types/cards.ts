@@ -77,10 +77,11 @@ export interface ProvisionTokenData {
     passkeyUrl?: string | null;
 }
 
-export interface InitialCardState { 
+export interface InitialCardState {
     cards: Card[];
     isLoadingCards: boolean;
     cardsError: string | null;
+    enrollingCardId: string | null;
 }
 
 export type PublicKeyResponse = string; // Raw PEM string

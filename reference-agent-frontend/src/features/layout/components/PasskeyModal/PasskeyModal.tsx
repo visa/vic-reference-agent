@@ -7,7 +7,6 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* START GENAI */
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from 'react-redux';
 import { getClientDeviceId } from "@/utils/deviceUtils";
@@ -88,27 +87,32 @@ const PasskeyModal: React.FC = () => {
 
   useEffect(() => {
     if (assuranceData) {
-      clearClientReferenceId(cardId);
-      const payload: PasskeyResult = {
-        id: clientReferenceId,
-        provisioned_token_id: provisionedTokenId,
-        assurance_data: {
-          identifier: assuranceData.identifier,
-          fido_assertion_data: {
-            code: assuranceData.fidoBlob
-          }
-        },
-        client_device_id: clientDeviceId,
-        ip: ip,
-        user_agent: userAgent,
-      };
-      if (onProcessComplete) { 
-        onProcessComplete(payload);
-      } else { 
-        console.error("onProcessComplete callback is not provided.");
-        throw new Error("onProcessComplete callback is missing.");
+      try {
+        clearClientReferenceId(cardId);
+        const payload: PasskeyResult = {
+          id: clientReferenceId,
+          provisioned_token_id: provisionedTokenId,
+          assurance_data: {
+            identifier: assuranceData.identifier,
+            fido_assertion_data: {
+              code: assuranceData.fidoBlob
+            }
+          },
+          client_device_id: clientDeviceId,
+          ip: ip,
+          user_agent: userAgent,
+        };
+        if (onProcessComplete) {
+          onProcessComplete(payload);
+        } else {
+          console.error("onProcessComplete callback is not provided.");
+          onClose();
+        }
+        dispatch(clearTerminalData());
+      } catch (error) {
+        console.error("Error processing assurance data:", error);
+        onClose();
       }
-      dispatch(clearTerminalData());
     }
   }, [assuranceData]);
   
@@ -119,4 +123,3 @@ const PasskeyModal: React.FC = () => {
 };
 
 export default PasskeyModal;
-/* END GENAI */

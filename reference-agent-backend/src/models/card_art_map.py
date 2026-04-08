@@ -10,7 +10,6 @@ from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column
 from src.models.base import Base
 
-# START GENAI@GHCOPILOT
 class CardArtMap(Base):
     __tablename__ = 'CARD_ART_MAP'
 
@@ -25,4 +24,3 @@ class CardArtMap(Base):
         """Initialize the CardArtMap model with required fields."""
         self.pan_enrollment_id = pan_enrollment_id
         self.card_art_id = card_art_id
-# END GENAI@GHCOPILOT

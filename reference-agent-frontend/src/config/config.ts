@@ -7,7 +7,6 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* START GENAI */
 interface EnvironmentConfig {
   backendBaseURL: string;
   vppBaseURL?: string;
@@ -21,11 +20,9 @@ export const config: EnvironmentConfig = {
   apiKey: import.meta.env.VITE_VPP_API_KEY,
   clientAppId: import.meta.env.VITE_VPP_CLIENT_APP_ID
 }
-
 export const PASSKEY_URL: string = `${config.vppBaseURL}/vts-auth/authenticate?apikey=${config.apiKey}&clientAppID=${config.clientAppId}`;
 
 export const APILoggingConfig = {
   localStorageKey: 'vdp_api_logs',
   maxDisplayLogs: 1000
 };
-/* END GENAI */

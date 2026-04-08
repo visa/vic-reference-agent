@@ -559,13 +559,11 @@ const CheckoutPage = () => {
               <div style={styles.cartItems}>
                 {cart.items.map(item => (
                   <div key={item.id} style={styles.cartItem}>
-                    {/* START GENAI */}
                     <img
                       src={item.product.image_url || '/images/placeholder-product.svg'}
                       alt={item.product.name}
                       style={styles.itemImage}
                     />
-                    {/* END GENAI */}
                     <div style={styles.itemDetails}>
                       <div style={styles.itemName}>{item.product.name}</div>
                       <div style={styles.itemQuantity}>Qty: {item.quantity}</div>

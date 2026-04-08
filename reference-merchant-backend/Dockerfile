@@ -19,8 +19,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy requirements file
 COPY requirements.txt .
 
-# Install Python dependencies
-RUN pip install --no-cache-dir --user -r requirements.txt
+# Install Python dependencies (optional secrets for builds behind corporate proxy/private registry)
+RUN --mount=type=secret,id=pipconf,target=/root/.config/pip/pip.conf,required=false \
+    --mount=type=secret,id=cacert,target=/tmp/pip.crt,required=false \
+    pip install --no-cache-dir --user -r requirements.txt
 
 # Stage 2: Runtime stage
 FROM python:3.12.8-slim

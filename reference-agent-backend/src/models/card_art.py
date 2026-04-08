@@ -11,7 +11,6 @@ from sqlalchemy.orm import Mapped, mapped_column
 from src.models.base import Base
 
 
-# START GENAI@GHCOPILOT
 class CardArt(Base):
     __tablename__ = 'CARD_ART'
 
@@ -30,4 +29,3 @@ class CardArt(Base):
         self.mime_type = mime_type
         self.data = data
 
-# END GENAI@GHCOPILOT

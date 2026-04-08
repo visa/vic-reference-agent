@@ -1,4 +1,3 @@
-<!-- START GENAI -->
 # Reference Agent Frontend
 
 > React frontend for the AI shopping agent powered by Visa Intelligent Commerce
@@ -179,4 +178,3 @@ Builds the app for production to the `dist/` folder.
 ## Support
 
 For issues and questions, please open an issue in the repository.
-<!-- END GENAI -->

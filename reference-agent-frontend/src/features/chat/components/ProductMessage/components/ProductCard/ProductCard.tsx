@@ -7,7 +7,6 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* START GENAI@GHCOPILOT */
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { VisaAddTiny, VisaSubtractTiny, VisaCartTiny, VisaCheckmarkLow } from '@visa/nova-icons-react';
@@ -18,7 +17,6 @@ import { formatCurrency } from '@/utils/formattingUtils';
 import styles from './ProductCard.module.css';
 import type { RootState, AppDispatch } from '@/store';
 import type { ResponseProduct } from '@/types';
-/* END GENAI@GHCOPILOT */
 
 interface ProductCardProps {
   product: ResponseProduct;
@@ -218,4 +216,3 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, messageIndex }) => {
 };
 
 export default ProductCard;
-/* END GENAI@GHCOPILOT */

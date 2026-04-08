@@ -7,7 +7,6 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* START GENAI */
 import React, {useState} from 'react';
 import {
     Dialog,
@@ -29,9 +28,7 @@ const DeleteCardModal: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>();
     const modalProps = useSelector((state: RootState) => state.modal.modalProps);
     const cardToDelete = modalProps?.card as CardWithArt | undefined;
-    /* START GENAI */
     const [loading, setLoading] = useState(false);   
-    /* END GENAI */
 
     const handleDeleteCard = async (): Promise<void> => {
         if (cardToDelete) {
@@ -56,9 +53,7 @@ const DeleteCardModal: React.FC = () => {
                     </Typography>
                     <Utility className="v-flex v-flex-row" style={{ gap: 'var(--size-scalable-12)' }}>
                         <Button destructive disabled={loading} onClick={handleDeleteCard}>
-                            {/* START GENAI */}
                             {loading ? 'Deleting...' : 'Delete'}
-                            {/* END GENAI */}
                         </Button>
                         <Button colorScheme="secondary" onClick={handleClose}>
                             Cancel
@@ -72,4 +67,3 @@ const DeleteCardModal: React.FC = () => {
 };
 
 export default DeleteCardModal;
-/* END GENAI */

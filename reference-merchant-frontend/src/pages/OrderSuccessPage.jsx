@@ -123,13 +123,11 @@ const OrderSuccessPage = () => {
             <div style={styles.orderItems}>
               {(order.items || []).map(item => (
                 <div key={item.id} style={styles.orderItem}>
-                  {/* START GENAI */}
                   <img
                     src={(item.product && item.product.image_url) || '/images/placeholder-product.svg'}
                     alt={(item.product && item.product.name) || item.product_name || 'Product'}
                     style={styles.itemImage}
                   />
-                  {/* END GENAI */}
                   <div style={styles.itemDetails}>
                     <h4 style={styles.itemName}>{(item.product && item.product.name) || item.product_name || 'Product'}</h4>
                     <p style={styles.itemDescription}>{(item.product && item.product.description) || ''}</p>

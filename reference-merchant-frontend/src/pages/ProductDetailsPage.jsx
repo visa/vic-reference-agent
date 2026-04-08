@@ -130,7 +130,6 @@ const ProductDetailsPage = () => {
         ...(isMobile ? styles.productDetailsMobile : {})
       }}>
         <div style={styles.imageSection}>
-          {/* START GENAI */}
           <img
             src={product.image_url || '/images/placeholder-product.svg'}
             alt={product.name}
@@ -139,7 +138,6 @@ const ProductDetailsPage = () => {
               e.target.src = '/images/placeholder-product.svg';
             }}
           />
-          {/* END GENAI */}
         </div>
         
         <div style={styles.infoSection}>

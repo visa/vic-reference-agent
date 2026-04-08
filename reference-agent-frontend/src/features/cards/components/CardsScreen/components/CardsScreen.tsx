@@ -7,7 +7,6 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* START GENAI */
 import React, { useCallback, useEffect } from 'react';
 import { VisaDeleteTiny, VisaChevronRightTiny, VisaAddTiny } from '@visa/nova-icons-react'
 import { useDispatch, useSelector } from 'react-redux';
@@ -38,6 +37,7 @@ const CardsScreen: React.FC = () => {
     const cards = useSelector((state: RootState) => state.cards.cards) as CardWithArt[];
     const loading = useSelector((state: RootState) => state.cards.isLoadingCards);
     const error = useSelector((state: RootState) => state.cards.cardsError);
+    const enrollingCardId = useSelector((state: RootState) => state.cards.enrollingCardId);
 
     const openAddCardModal = useCallback(() => {
         console.log("Opening add card modal");
@@ -116,9 +116,14 @@ const CardsScreen: React.FC = () => {
                                             Provision Token
                                         </Button>
                                     ) : card.status === 'PENDING' && (
-                                        <Button onClick={() => handleSetUpPasskeyClick(card)}>
-                                            Set Up Passkey
-                                            <VisaChevronRightTiny />
+                                        <Button
+                                            onClick={() => handleSetUpPasskeyClick(card)}
+                                            disabled={enrollingCardId === card.cardId}
+                                        >
+                                            {enrollingCardId === card.cardId
+                                                ? 'Setting up...'
+                                                : 'Set Up Passkey'}
+                                            {enrollingCardId !== card.cardId && <VisaChevronRightTiny />}
                                         </Button>
                                     )}
                                     <Button
@@ -148,4 +153,3 @@ const CardsScreen: React.FC = () => {
 };
 
 export default React.memo(CardsScreen);
-/* END GENAI */

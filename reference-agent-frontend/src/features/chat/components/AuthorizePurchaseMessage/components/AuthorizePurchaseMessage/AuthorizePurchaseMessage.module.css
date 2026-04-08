@@ -80,7 +80,6 @@
   }
 }
 
-/* START GENAI@GHCOPILOT */
 .addressMissingCard {
   background: #fef3cd;
   border: 1px solid #f59e0b;
@@ -97,7 +96,6 @@
   margin-bottom: 0;
   line-height: 1.4;
 }
-/* END GENAI@GHCOPILOT */
 
 @media (max-width: 480px) {
   .authorizePurchaseContainer {

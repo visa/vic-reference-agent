@@ -28,6 +28,7 @@ from src.repositories.intent import IntentRepository
 from src.repositories.mandate import MandateRepository
 from src.schemas.cards import AddCardRequest, AddCardResponse, CardResponse, ProvisionTokenRequest
 from src.services.vdp_client import VDPClient
+from src.utils.constants import CACHE_CONTROL_MAX_AGE
 
 class CardService:
     def __init__(self, vdp_client: VDPClient, card_repo: CardRepository, intent_repo: IntentRepository, mandate_repo: MandateRepository):
@@ -174,7 +175,6 @@ class CardService:
             for card in cards
         ]
 
-    # START GENAI
     async def get_card_art(self, card_id: UUID) -> Response:
         """
         Fetches the card art for a given card ID.
@@ -200,8 +200,8 @@ class CardService:
         card_art = await self.card_repo.get_card_art(card_art_id)
         if not card_art:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Card art not found.")
-        
-        return Response(content=card_art.data, media_type=card_art.mime_type, headers={"Cache-Control": "public, max-age=3600"})
+
+        return Response(content=card_art.data, media_type=card_art.mime_type, headers={"Cache-Control": f"public, max-age={CACHE_CONTROL_MAX_AGE}"})
     
     async def put_card_art(self, pan_enrollment_id: str, card_art_id: str | None) -> str:
         # Fetch the latest card art GUID for the PAN enrollment ID if not provided

@@ -16,7 +16,7 @@ from typing import Sequence
 from uuid import uuid4
 from calendar import timegm
 from fastapi import Request
-from jwcrypto import jwk, jwe
+from authlib.jose import JsonWebEncryption, JsonWebKey, OctKey
 from jose import jwt
 import requests
 
@@ -24,7 +24,20 @@ from src.config import settings
 from src.schemas.commerce import AssuranceData, TransactionData
 from src.utils.encoder import base64url_encode
 from src.schemas.commerce import AssuranceData
-from src.utils.constants import USER_EMAIL, USER_ID, AGENT_ID, AGENT_NAME, AGENT_URL, HASH_KEY
+from src.utils.constants import (
+    USER_EMAIL, USER_ID, AGENT_ID, AGENT_NAME, AGENT_URL, HASH_KEY,
+    DEFAULT_LOCALE, DEFAULT_COUNTRY_CODE, DEFAULT_LANGUAGE_CODE,
+    PAN_SOURCE_MANUAL, CONSUMER_ENTRY_MODE_KEY, PRESENTATION_TYPE_AI_AGENT,
+    PROTECTION_TYPE_CLOUD, ACCOUNT_TYPE_WALLET, INTENT_FIDO, PLATFORM_TYPE_WEB,
+    ATTESTATION_TYPE_REGISTER, ATTESTATION_TYPE_AUTHENTICATE,
+    REASON_CODE_DEVICE_BINDING, REASON_CODE_PAYMENT,
+    ENROLLMENT_REFERENCE_TYPE_TOKEN, ENROLLMENT_REFERENCE_PROVIDER_VTS,
+    REQUEST_TIMEOUT_SECONDS, UPDATE_REASON_CUSTOMER_CONFIRMED,
+    VERIFICATION_TYPE_DEVICE, VERIFICATION_ENTITY_ID, VERIFICATION_EVENT_CODES,
+    VERIFICATION_METHOD_CODE, VERIFICATION_RESULT_SUCCESS,
+    TRANSACTION_TYPE_PURCHASE, TRANSACTION_STATUS_APPROVED, TRANSACTION_STATUS_DECLINED,
+    DEVICE_TYPE_DESKTOP, DEVICE_BRAND_UNKNOWN
+)
 
 class VDPClient:
     def __init__(self, request: Request):
@@ -42,9 +55,9 @@ class VDPClient:
         self.tr_enc_api_key = settings.tr_enc_api_key
         self.tr_enc_shared_secret = settings.tr_enc_shared_secret
 
-        self.mle_enc_cert = jwk.JWK.from_pem(bytes(settings.mle_enc_cert, 'ascii'))
+        self.mle_enc_cert = JsonWebKey.import_key(settings.mle_enc_cert)
         self.mle_key_id = settings.mle_key_id
-        self.mle_dec_key = jwk.JWK.from_pem(bytes(settings.mle_dec_key, 'ascii'))
+        self.mle_dec_key = JsonWebKey.import_key(settings.mle_dec_key)
 
         self.request = request
         self.request.state.logs = []
@@ -103,7 +116,7 @@ class VDPClient:
         session = requests.Session()
         request = requests.Request(method=method, url=full_url, headers=headers, data=final_body).prepare()
         try:
-            response = session.send(request, timeout=60)
+            response = session.send(request, timeout=REQUEST_TIMEOUT_SECONDS)
         except requests.RequestException as e:
             raise
 
@@ -130,8 +143,10 @@ class VDPClient:
 
         # Raise exception for error responses
         if response.status_code >= 400:
-            raise Exception(f"Downstream Error: {response.status_code} - {response_json}")
-        
+            error_message = f"VDP API request failed with status {response.status_code}"
+            # Log detailed error internally but don't expose in exception message
+            raise ValueError(error_message)
+
         return response_json
     
     def _get_resource_path(self, url):
@@ -142,44 +157,34 @@ class VDPClient:
 
     # For field-level encryption
     def _encrypt_with_secret(self, secret, kid, payload):
-        key = jwk.JWK(
-            kid=kid,
-            kty="oct",
-            alg="A256GCMKW",
-            k=base64.urlsafe_b64encode(hashlib.sha256(secret.encode('utf-8')).digest()).rstrip(b'=').decode('utf-8')
+        key = OctKey.import_key(
+            hashlib.sha256(secret.encode('utf-8')).digest(),
+            options={"kid": kid, "alg": "A256GCMKW"}
         )
-        protected_header = json.dumps({
+        protected_header = {
             "alg": "A256GCMKW",
             "enc": "A256GCM",
             "kid": kid
-        })
-        jwe_obj = jwe.JWE(
-            json.dumps(payload).encode('utf-8'),
-            protected=protected_header
-        )
-        jwe_obj.add_recipient(key)
-        return jwe_obj.serialize(compact=True)
+        }
+        jwe_instance = JsonWebEncryption()
+        return jwe_instance.serialize_compact(protected_header, json.dumps(payload).encode('utf-8'), key).decode('utf-8')
 
     # For MLE encryption
     def _encrypt_with_cert(self, cert, kid, payload):
-        protected_header = json.dumps({
+        protected_header = {
             "alg": "RSA-OAEP-256",
             "enc": "A256GCM",
             "kid": kid,
             "iat": int(round(time.time() * 1000))
-        })
-        jwe_obj = jwe.JWE(
-            json.dumps(payload).encode('utf-8'),
-            recipient=cert,
-            protected=protected_header
-        )
-        return jwe_obj.serialize(compact=True)
+        }
+        jwe_instance = JsonWebEncryption()
+        return jwe_instance.serialize_compact(protected_header, json.dumps(payload).encode('utf-8'), cert).decode('utf-8')
 
     # For MLE decryption
     def _decrypt_with_key(self, key, encrypted_payload):
-        jwetoken = jwe.JWE()
-        jwetoken.deserialize(encrypted_payload, key=key)
-        return json.loads(jwetoken.payload.decode("utf-8"))
+        jwe_instance = JsonWebEncryption()
+        result = jwe_instance.deserialize_compact(encrypted_payload, key)
+        return json.loads(result["payload"].decode("utf-8"))
 
     def _get_hash(self, secret, payload, base64_encoded = False):
         hash = hmac.new(
@@ -206,12 +211,28 @@ class VDPClient:
         }
     
     def enroll_pan(self, card_number: str, name: str, exp_month: int, exp_year: int, cvv: str):
+        """
+        Enroll a PAN (Primary Account Number) with VTS.
+
+        Args:
+            card_number: Card number to enroll
+            name: Cardholder name
+            exp_month: Expiration month (1-12)
+            exp_year: Expiration year (YYYY)
+            cvv: Card CVV
+
+        Returns:
+            Enrollment response with vPanEnrollmentID
+
+        Raises:
+            ValueError: If enrollment fails or returns empty response
+        """
         resp = self._make_request("POST", "/vts/panEnrollments", {
-            "locale": "en_US",
+            "locale": DEFAULT_LOCALE,
             "clientAppID": self.tr_app_id,
             "clientWalletAccountID": self.tr_id,
-            "panSource": "MANUALLYENTERED",
-            "consumerEntryMode": "KEYENTERED",
+            "panSource": PAN_SOURCE_MANUAL,
+            "consumerEntryMode": CONSUMER_ENTRY_MODE_KEY,
             "encPaymentInstrument": self._encrypt_with_secret(self.tr_enc_shared_secret, self.tr_enc_api_key, {
                 "accountNumber": card_number,
                 "name": name,
@@ -222,7 +243,8 @@ class VDPClient:
                 "cvv2": cvv
             })
         })
-        assert resp is not None, "Unexpected empty response from Enroll PAN endpoint"
+        if resp is None:
+            raise ValueError("Empty response from Enroll PAN endpoint")
         return resp
     
     def provision_token_given_pan_enrollment_id(self, pan_enrollment_id: str, exp_month: int, exp_year: int):
@@ -232,10 +254,10 @@ class VDPClient:
             "clientWalletAccountEmailAddress": "test@example.com",
             "clientWalletAccountEmailAddressHash": self._get_hash(HASH_KEY, "test@example.com", True),
             "presentationType": [
-                "AI_AGENT"
+                PRESENTATION_TYPE_AI_AGENT
             ],
-            "protectionType": "CLOUD",
-            "accountType": "WALLET",
+            "protectionType": PROTECTION_TYPE_CLOUD,
+            "accountType": ACCOUNT_TYPE_WALLET,
             "encRiskDataInfo": self._encrypt_with_secret(self.tr_enc_shared_secret, self.tr_enc_api_key, [
                 {
                     "name": "paymentInstrument.expirationDate.month",
@@ -247,7 +269,8 @@ class VDPClient:
                 }
             ]),
         })
-        assert resp is not None, "Unexpected empty response from Provision Token endpoint"
+        if resp is None:
+            raise ValueError("Empty response from Provision Token endpoint")
         token = resp["tokenInfo"]
         token['vProvisionedTokenID'] = resp["vProvisionedTokenID"]
         return token
@@ -255,18 +278,20 @@ class VDPClient:
     def deprovision(self, provisioned_token_id: str):
         _ = self._make_request("PUT", f"/vts/provisionedTokens/{provisioned_token_id}/delete", {
             "updateReason": {
-                "reasonCode": "CUSTOMER_CONFIRMED",
+                "reasonCode": UPDATE_REASON_CUSTOMER_CONFIRMED,
             }
         })
 
     def get_card_metadata(self, pan_enrollment_id: str):
         resp = self._make_request("GET", f"/vts/panEnrollments/{pan_enrollment_id}")
-        assert resp is not None, "Unexpected empty response from Get Card Metadata endpoint"
+        if resp is None:
+            raise ValueError("Empty response from Get Card Metadata endpoint")
         return resp.get('cardMetaData')
 
     def get_card_art(self, card_art_id: str):
         resp = self._make_request("GET", f"/vts/cps/getContent/{card_art_id}")
-        assert resp is not None, "Unexpected empty response from Get Card Art endpoint"
+        if resp is None:
+            raise ValueError("Empty response from Get Card Art endpoint")
         return resp.get('content')[0]
 
     def device_binding(self, id, provisioned_token_id, exp_month, exp_year, session_context, browser_data):
@@ -274,8 +299,8 @@ class VDPClient:
             "clientReferenceID": id,
             "clientAppID": self.tr_app_id,
             "clientWalletAccountEmailAddressHash": self._get_hash(HASH_KEY, USER_EMAIL, True),
-            "intent": "FIDO",
-            "platformType": "WEB",
+            "intent": INTENT_FIDO,
+            "platformType": PLATFORM_TYPE_WEB,
             "encBillingInfo": self._encrypt_with_secret(self.tr_enc_shared_secret, self.tr_enc_api_key, {
                "email": USER_EMAIL
             }),
@@ -292,7 +317,8 @@ class VDPClient:
             "sessionContext": session_context,
             "browserData": self._process_browser_data(browser_data),
         })
-        assert resp is not None, "Unexpected empty response from Request Device Binding endpoint"
+        if resp is None:
+            raise ValueError("Empty response from Request Device Binding endpoint")
         return resp
 
     def create_challenge(self, id, provisioned_token_id, identifier):
@@ -301,7 +327,8 @@ class VDPClient:
             "stepUpRequestID": identifier,
             "date": int(time.time())
         })
-        assert resp is not None, "Unexpected empty response from Submit Step Up Method endpoint"
+        if resp is None:
+            raise ValueError("Empty response from Submit Step Up Method endpoint")
         return resp
 
     def solve_challenge(self, id, provisioned_token_id, code):
@@ -310,14 +337,15 @@ class VDPClient:
             "otpValue": code,
             "date": int(time.time())
         })
-        assert resp is not None, "Unexpected empty response from Validate Step Up OTP endpoint"
+        if resp is None:
+            raise ValueError("Empty response from Validate Step Up OTP endpoint")
         return resp
     
     def attestation_options_register(self, id, provisioned_token_id, session_context, browser_data, amount = 0, currency_code = 840):
         resp = self._make_request("POST", f"/vts/provisionedTokens/{provisioned_token_id}/attestation/options", {
             "clientReferenceID": id,
-            "type": "REGISTER",
-            "reasonCode": "DEVICE_BINDING",
+            "type": ATTESTATION_TYPE_REGISTER,
+            "reasonCode": REASON_CODE_DEVICE_BINDING,
             "sessionContext": session_context,
             "browserData": self._process_browser_data(browser_data),
             "dynamicData":  {
@@ -338,15 +366,16 @@ class VDPClient:
                 "selectedPopupForRegister": True
             }
         })
-        assert resp is not None, "Unexpected empty response from Get Device Attestation Options endpoint"
+        if resp is None:
+            raise ValueError("Empty response from Get Device Attestation Options endpoint")
         auth_context = resp["authenticationContext"]
         return auth_context
     
     def attestation_options_authenticate(self, id, provisioned_token_id, session_context, browser_data, amount, currency_code, merchants = None):
         resp = self._make_request("POST", f"/vts/provisionedTokens/{provisioned_token_id}/attestation/options", {
             "clientReferenceID": id,
-            "type": "AUTHENTICATE",
-            "reasonCode": "PAYMENT",
+            "type": ATTESTATION_TYPE_AUTHENTICATE,
+            "reasonCode": REASON_CODE_PAYMENT,
             "sessionContext": session_context,
             "browserData": self._process_browser_data(browser_data),
             "dynamicData":  {
@@ -367,7 +396,8 @@ class VDPClient:
                 "selectedPopupForAuthenticate": True
             }
         })
-        assert resp is not None, "Unexpected empty response from Get Device Attestation Options endpoint"
+        if resp is None:
+            raise ValueError("Empty response from Get Device Attestation Options endpoint")
         auth_context = resp["authenticationContext"]
         return auth_context
     
@@ -375,7 +405,7 @@ class VDPClient:
         if device_info:
             device_data = device_info.model_dump() if hasattr(device_info, 'model_dump') else device_info
         else:
-            device_data = {"type": "Desktop", "brand": "Unknown"}
+            device_data = {"type": DEVICE_TYPE_DESKTOP, "brand": DEVICE_BRAND_UNKNOWN}
         resp = self._make_request("POST", "/vacp/v1/cards", {
             "clientReferenceId": USER_ID,
             "client": {
@@ -387,32 +417,33 @@ class VDPClient:
                 "ipAddress": ip,
                 "clientDeviceId": client_device_id,
                 "applicationName": AGENT_NAME,
-                "countryCode": "US",
+                "countryCode": DEFAULT_COUNTRY_CODE,
                 "deviceData": device_data
             },
             "enrollmentReferenceData": {
                 "enrollmentReferenceId": provisioned_token_id,
-                "enrollmentReferenceType": "TOKEN_REFERENCE_ID",
-                "enrollmentReferenceProvider": "VTS",
+                "enrollmentReferenceType": ENROLLMENT_REFERENCE_TYPE_TOKEN,
+                "enrollmentReferenceProvider": ENROLLMENT_REFERENCE_PROVIDER_VTS,
             },
             "consumer": {
                 "consumerId": USER_ID,
-                "countryCode": "US",
-                "languageCode": "en",
+                "countryCode": DEFAULT_COUNTRY_CODE,
+                "languageCode": DEFAULT_LANGUAGE_CODE,
                 "consumerIdentity": {
                     "identityType": "EMAIL_ADDRESS",
                     "identityValue": USER_EMAIL
                 }
             }
         }, message_encrypted=True)
-        assert resp is not None, "Unexpected empty response from Enroll Card endpoint"
+        if resp is None:
+            raise ValueError("Empty response from Enroll Card endpoint")
         return resp
     
     def create_intent(self, provisioned_token_id, mandate_id, amount, currency_code, assurance_data: AssuranceData, verification_timestamp, expiration_timestamp, prompt = None, client_device_id=None, ip = None, user_agent = None, device_info = None):
         if device_info:
             device_data = device_info.model_dump() if hasattr(device_info, 'model_dump') else device_info
         else:
-            device_data = {"type": "Desktop", "brand": "Unknown"}
+            device_data = {"type": DEVICE_TYPE_DESKTOP, "brand": DEVICE_BRAND_UNKNOWN}
         resp = self._make_request("POST", "/vacp/v1/instructions", {
             "clientReferenceId": USER_ID,
             "client": {
@@ -424,21 +455,18 @@ class VDPClient:
                 "ipAddress": ip,
                 "clientDeviceId": client_device_id,
                 "applicationName": AGENT_NAME,
-                "countryCode": "US",
+                "countryCode": DEFAULT_COUNTRY_CODE,
                 "deviceData": device_data
             },
             "consumerId": USER_ID,
             "tokenId": provisioned_token_id,
             "assuranceData": [
                 {
-                    "verificationType": "DEVICE",
-                    "verificationEntity": "10",
-                    "verificationEvents": [
-                        "01",
-                        "02"
-                    ],
-                    "verificationMethod": "23",
-                    "verificationResults": "01",
+                    "verificationType": VERIFICATION_TYPE_DEVICE,
+                    "verificationEntity": VERIFICATION_ENTITY_ID,
+                    "verificationEvents": VERIFICATION_EVENT_CODES,
+                    "verificationMethod": VERIFICATION_METHOD_CODE,
+                    "verificationResults": VERIFICATION_RESULT_SUCCESS,
                     "verificationTimestamp": str(verification_timestamp),
                     "methodResults": {
                         "dfpSessionId": "ALLOW_ME",
@@ -461,7 +489,8 @@ class VDPClient:
             ],
             "compressedPrompt": prompt,
         }, message_encrypted=True)
-        assert resp is not None, "Unexpected empty response from Create Instruction endpoint"
+        if resp is None:
+            raise ValueError("Empty response from Create Instruction endpoint")
         return resp
     
     def retrieve_credentials(self, provisioned_token_id: str, instruction_id: str, transaction_data: Sequence[TransactionData]):
@@ -484,7 +513,8 @@ class VDPClient:
                 for transaction_data_item in transaction_data
             ]
         }, message_encrypted=True)
-        assert resp is not None, "Unexpected empty response from Retrieve Credentials endpoint"
+        if resp is None:
+            raise ValueError("Empty response from Retrieve Credentials endpoint")
         purchase = jwt.get_unverified_claims(resp["signedPayload"])
         purchase["status"] = resp["status"]
         return purchase
@@ -498,7 +528,7 @@ class VDPClient:
                     **({"orderData": {"orderId": order_id}} if order_id is not None else {}),
                     "paymentConfirmationData": {
                         "dynamicDataId": dynamic_data_id,
-                        "transactionType": "PURCHASE",
+                        "transactionType": TRANSACTION_TYPE_PURCHASE,
                         "transactionStatus": transaction_status,
                         "transactionTimestamp": str(int(time.time())),
                         "transactionAmount": {
@@ -509,49 +539,6 @@ class VDPClient:
                 }
             ]
         }, message_encrypted=True)
-        assert resp is not None, "Unexpected empty response from Confirm Transaction endpoint"
+        if resp is None:
+            raise ValueError("Empty response from Confirm Transaction endpoint")
         return resp
-    
-    # def confirm_transaction(self, user_id, instruction_id, transaction_reference_id, dynamic_data_id, order_id, order_status, amount, currency_code, expected_delivery_date = None):
-    #     resp = self._make_request("POST", f"/vacp/v1/instructions/{instruction_id}/confirmations", {
-    #         "clientReferenceId": user_id,
-    #         "confirmationData": [
-    #             {
-    #                 "transactionReferenceId": transaction_reference_id,
-    #                 "orderData": {
-    #                     "orderId": order_id,
-    #                     "orderStatus": order_status,
-    #                     "expectedDeliveryDate": expected_delivery_date
-    #                 },
-    #                 "paymentConfirmationData": {
-    #                     "dynamicDataId": dynamic_data_id,
-    #                     "transactionType": "PURCHASE",
-    #                     "transactionStatus": "APPROVED" if order_status == "COMPLETED" else "DECLINED",
-    #                     "transactionTimestamp": str(int(time.time())),
-    #                     "transactionAmount": {
-    #                         "transactionCurrencyCode": str(currency_code),
-    #                         "transactionAmount": str(amount),
-    #                     }
-    #                 }
-    #             }
-    #         ]
-    #     }, message_encrypted=True)
-    #     assert resp is not None, "Unexpected empty response from Confirm Transaction endpoint"
-    #     return resp
-
-    # def confirm_transaction_manual(self, user_id: str, instruction_id: str, confirmation_data: list[ConfirmationData]):
-    #     resp = self._make_request("POST", f"/vacp/v1/instructions/{instruction_id}/confirmations", {
-    #         "clientReferenceId": user_id,
-    #         "confirmationData": [
-    #             {
-    #                 "transactionReferenceId": str(confirmation_data_item.transaction_reference_id),
-    #                 "paymentConfirmationData": {
-    #                     "transactionType": "PURCHASE",
-    #                     "transactionStatus": "APPROVED" if confirmation_data_item.is_success else "DECLINED",
-    #                     "transactionTimestamp": str(int(time.time()))
-    #                 }
-    #             } for confirmation_data_item in confirmation_data
-    #         ]
-    #     }, message_encrypted=True)
-    #     assert resp is not None, "Unexpected empty response from Confirm Transaction endpoint"
-    #     return resp

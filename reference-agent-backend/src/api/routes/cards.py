@@ -10,14 +10,14 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException, Response, status
 import logging
 from fastapi.responses import FileResponse, PlainTextResponse
-from jwcrypto import jwk, jwe
+from authlib.jose import JsonWebEncryption, JsonWebKey
 import json
 
 from src.dependencies import CardServiceDep
 from src.schemas.cards import AddCardResponse, CardResponse, AddCardRequest, EncryptedAddCardRequest
 from src.utils.constants import CARD_DATA_PRIVATE_KEY_STRING, CARD_DATA_PUBLIC_KEY_STRING
 
-CARD_DATA_PRIVATE_KEY = jwk.JWK.from_pem(CARD_DATA_PRIVATE_KEY_STRING.encode('utf-8'))
+CARD_DATA_PRIVATE_KEY = JsonWebKey.import_key(CARD_DATA_PRIVATE_KEY_STRING)
 
 router = APIRouter()
 
@@ -35,9 +35,9 @@ async def add_card(
     try:
         # Decrypt the encrypted payment instrument
         jwe_token = add_card_request.enc_payment_instrument
-        token = jwe.JWE()
-        token.deserialize(jwe_token, key=CARD_DATA_PRIVATE_KEY)
-        plaintext = token.payload.decode('utf-8')
+        jwe_instance = JsonWebEncryption()
+        result = jwe_instance.deserialize_compact(jwe_token, CARD_DATA_PRIVATE_KEY)
+        plaintext = result["payload"].decode('utf-8')
         # Convert the plaintext to an unencrypted AddCardRequest object
         card_request_data = json.loads(plaintext)
         add_card_request_obj = AddCardRequest(**card_request_data)

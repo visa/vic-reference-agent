@@ -5,16 +5,20 @@
   "type": "module",
   "dependencies": {
     "@reduxjs/toolkit": "2.8.2",
+    "@remix-run/router": "1.23.2",
     "@visa/nova-icons-react": "^2.0.4",
     "@visa/nova-react": "2.5.4",
     "@visa/nova-styles": "1.6.4",
+    "bowser": "2.14.1",
     "jose": "^6.0.12",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "7.60.0",
     "react-redux": "9.2.0",
-    "react-router-dom": "^6.28.0",
-    "ua-parser-js": "^2.0.6"
+    "react-router-dom": "6.29.0"
+  },
+  "overrides": {
+    "@remix-run/router": "1.23.2"
   },
   "scripts": {
     "start": "vite --port 3000 --host",

@@ -37,7 +37,6 @@ const ProductCard = ({ product }) => {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* START GENAI */}
       <img
         src={product.image_url || '/images/placeholder-product.svg'}
         alt={product.name}
@@ -46,7 +45,6 @@ const ProductCard = ({ product }) => {
           e.target.src = '/images/placeholder-product.svg';
         }}
       />
-      {/* END GENAI */}
       <div style={styles.content}>
         <h3 style={styles.name}>{product.name}</h3>
         <p style={styles.description}>{product.description}</p>
