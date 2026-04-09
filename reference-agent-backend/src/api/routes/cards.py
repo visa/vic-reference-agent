@@ -15,16 +15,19 @@ import json
 
 from src.dependencies import CardServiceDep
 from src.schemas.cards import AddCardResponse, CardResponse, AddCardRequest, EncryptedAddCardRequest
-from src.utils.constants import CARD_DATA_PRIVATE_KEY_STRING, CARD_DATA_PUBLIC_KEY_STRING
 
-CARD_DATA_PRIVATE_KEY = JsonWebKey.import_key(CARD_DATA_PRIVATE_KEY_STRING)
+# Generate an ephemeral RSA key pair at startup for encrypting card data
+# in transit between the frontend and backend.
+_rsa_key = JsonWebKey.generate_key('RSA', 2048, is_private=True)
+CARD_DATA_PRIVATE_KEY = _rsa_key
+CARD_DATA_PUBLIC_KEY_PEM = _rsa_key.as_pem(is_private=False).decode('utf-8')
 
 router = APIRouter()
 
 @router.get("/public-key")
 async def get_public_key() -> PlainTextResponse:
     """Returns the public key for encrypting card details."""
-    return PlainTextResponse(CARD_DATA_PUBLIC_KEY_STRING)
+    return PlainTextResponse(CARD_DATA_PUBLIC_KEY_PEM)
 
 @router.post("")
 async def add_card(
