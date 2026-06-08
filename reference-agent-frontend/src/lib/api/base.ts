@@ -22,6 +22,23 @@ class BaseApiService {
     BaseApiService.dispatch = dispatchFn;
   }
 
+  /** Stable per-tab session id, used to isolate the backend conversation. */
+  static getSessionId(): string {
+    try {
+      let id = sessionStorage.getItem('vic_session_id');
+      if (!id) {
+        id =
+          typeof crypto !== 'undefined' && 'randomUUID' in crypto
+            ? crypto.randomUUID()
+            : `sess-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        sessionStorage.setItem('vic_session_id', id);
+      }
+      return id;
+    } catch {
+      return 'default-session';
+    }
+  }
+
   static async makeRequest(
     endpoint: string,
     method: HttpMethod = 'GET',
@@ -35,6 +52,20 @@ class BaseApiService {
       const defaultHeaders: RequestHeaders = {
         'Content-Type': 'application/json',
       };
+
+      // Authenticate to the agent backend with the shared API key, and tag the
+      // request with a stable per-tab session id so conversations are isolated
+      // per user (the backend keys its LangGraph thread + credentials on it).
+      // Only attach these to agent-backend calls (relative endpoints or the
+      // configured base URL) so nothing is sent to third-party/absolute URLs.
+      const isBackendCall =
+        !endpoint.startsWith('http') || url.startsWith(config.backendBaseURL);
+      if (isBackendCall) {
+        if (config.agentApiKey) {
+          defaultHeaders['X-Api-Key'] = config.agentApiKey;
+        }
+        defaultHeaders['X-Session-Id'] = BaseApiService.getSessionId();
+      }
 
       if (body instanceof FormData) {
         delete defaultHeaders['Content-Type'];

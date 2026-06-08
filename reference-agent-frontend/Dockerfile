@@ -23,6 +23,10 @@ RUN npm ci
 # Copy source code
 COPY . .
 
+# Agent backend API key for authenticated calls; exposed to Vite at build time.
+ARG VITE_AGENT_API_KEY
+ENV VITE_AGENT_API_KEY=$VITE_AGENT_API_KEY
+
 # Build the React app
 RUN npm run build
 

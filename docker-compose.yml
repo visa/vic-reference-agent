@@ -34,6 +34,8 @@ services:
       - API_BASE_URL=http://reference-merchant-backend:8001
       # Same key, used by the MCP server to authenticate to the backend.
       - MERCHANT_API_KEY=${MERCHANT_API_KEY:?MERCHANT_API_KEY must be set (see .env.example)}
+      # Shared secret the MCP server requires on its own /mcp endpoint.
+      - MCP_API_KEY=${MCP_API_KEY:?MCP_API_KEY must be set (see .env.example)}
     depends_on:
       - reference-merchant-backend
     networks:
@@ -49,6 +51,10 @@ services:
       - "8000:8000"
     environment:
       - MERCHANT_MCP_URL=http://reference-merchant-mcp:8002/mcp
+      # Shared secret clients must present to call the agent backend (X-Api-Key).
+      - AGENT_API_KEY=${AGENT_API_KEY:?AGENT_API_KEY must be set (see .env.example)}
+      # Shared secret the agent presents when connecting to the MCP server.
+      - MCP_API_KEY=${MCP_API_KEY:?MCP_API_KEY must be set (see .env.example)}
     volumes:
       - ./reference-agent-backend/data:/app/data
     depends_on:
@@ -78,6 +84,10 @@ services:
     build:
       context: ./reference-agent-frontend
       dockerfile: Dockerfile
+      args:
+        # Baked into the Vite bundle so the agent frontend can authenticate
+        # to the agent backend.
+        - VITE_AGENT_API_KEY=${AGENT_API_KEY:?AGENT_API_KEY must be set (see .env.example)}
     container_name: reference-agent-frontend
     ports:
       - "3000:3000"

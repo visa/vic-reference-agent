@@ -7,9 +7,11 @@
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 from contextlib import asynccontextmanager
+from contextvars import ContextVar
 from uuid import UUID, uuid4
 from fastapi import FastAPI
 import httpx
+import os
 import re
 from langchain_mcp_adapters.tools import load_mcp_tools
 from mcp.client.streamable_http import streamablehttp_client
@@ -26,36 +28,53 @@ from src.config import settings
 from src.schemas.commerce import Credentials
 
 agent = None
-# Global state for thread_id and credentials
-current_thread_id: UUID = uuid4()
-current_credentials: Credentials | None = None
-# Credentials are released to the MCP payment elicitation ONLY while a
-# server-initiated checkout is in progress. This flag is the authorization gate:
-# it cannot be flipped by anything the LLM produces, so an injection-triggered
-# checkout_cart during a product search cannot exfiltrate stored card data.
-checkout_authorized: bool = False
 
-def reset_thread() -> None:
-    global current_thread_id, current_credentials, checkout_authorized
-    current_thread_id = uuid4()
-    current_credentials = None
-    checkout_authorized = False
+# Per-conversation thread ids, keyed by the client-supplied session id. Each
+# session gets its own LangGraph checkpoint thread, so concurrent users cannot
+# read or hijack each other's conversation history (was a shared module global).
+_session_threads: dict[str, str] = {}
+
+# Checkout credentials and the authorization flag are held in CONTEXTVARS, which
+# are local to the current asyncio task. Each request runs in its own task, so
+# one user's credentials can never bleed into another concurrent request (the
+# previous module-global design allowed a credential-theft race). The flag is
+# the gate that releases credentials to the MCP payment elicitation ONLY during
+# a server-initiated checkout — it cannot be flipped by anything the LLM emits,
+# so an injection-triggered checkout_cart during a search cannot exfiltrate data.
+_credentials_var: ContextVar[Credentials | None] = ContextVar(
+    "vic_current_credentials", default=None
+)
+_checkout_authorized_var: ContextVar[bool] = ContextVar(
+    "vic_checkout_authorized", default=False
+)
+
+def _thread_id_for(session_id: str) -> str:
+    """Return a stable thread id for a session, creating one on first use."""
+    thread_id = _session_threads.get(session_id)
+    if thread_id is None:
+        thread_id = str(uuid4())
+        _session_threads[session_id] = thread_id
+    return thread_id
+
+def reset_thread(session_id: str) -> None:
+    """Rotate a session's conversation thread and drop any held credentials."""
+    _session_threads[session_id] = str(uuid4())
+    clear_credentials()
 
 def store_credentials(credentials: Credentials) -> None:
-    global current_credentials, checkout_authorized
-    current_credentials = credentials
-    checkout_authorized = True
+    _credentials_var.set(credentials)
+    _checkout_authorized_var.set(True)
 
 def clear_credentials() -> None:
-    global current_credentials, checkout_authorized
-    current_credentials = None
-    checkout_authorized = False
+    _credentials_var.set(None)
+    _checkout_authorized_var.set(False)
 
 async def on_elicitation(context: RequestContext, params: ElicitRequestParams) -> ElicitResult | ErrorData:
     # Only release credentials during an authorized, server-initiated checkout.
-    # Without this gate, prompt injection in tool output could trigger
-    # checkout_cart and auto-accept the payment form to exfiltrate card data.
-    if not checkout_authorized or current_credentials is None:
+    # Reads the task-local contextvars set by the current request, so it cannot
+    # return another concurrent session's card data.
+    credentials = _credentials_var.get()
+    if not _checkout_authorized_var.get() or credentials is None:
         return ErrorData(
             code=INTERNAL_ERROR,
             message="No credentials available for checkout."
@@ -63,9 +82,9 @@ async def on_elicitation(context: RequestContext, params: ElicitRequestParams) -
     return ElicitResult(
         action="accept",
         content={
-            "card_number": current_credentials.card_number,
-            "expiry_date": current_credentials.exp_month + "/" + current_credentials.exp_year,
-            "cvv": current_credentials.cvv
+            "card_number": credentials.card_number,
+            "expiry_date": credentials.exp_month + "/" + credentials.exp_year,
+            "cvv": credentials.cvv
         }
     )
 
@@ -102,19 +121,41 @@ def redact_sensitive(text: str) -> str:
     redacted = _CVV_RE.sub("[REDACTED-CVV]", redacted)
     return redacted
 
+def _redact_dict(value):
+    """Recursively apply redact_sensitive to every string in a parsed JSON
+    structure. Operating on parsed values (not the raw JSON text) avoids
+    corrupting Luhn-valid numeric identifiers such as order ids/tracking codes."""
+    if isinstance(value, str):
+        return redact_sensitive(value)
+    if isinstance(value, dict):
+        return {k: _redact_dict(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_redact_dict(v) for v in value]
+    return value
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global agent
-    async with streamablehttp_client(settings.merchant_mcp_url) as (read, write, _):
+    # Authenticate to the merchant MCP server with the shared API key so the
+    # MCP endpoint can reject unauthenticated direct tool invocation.
+    _mcp_headers = {}
+    _mcp_key = os.environ.get("MCP_API_KEY")
+    if _mcp_key:
+        _mcp_headers["X-Api-Key"] = _mcp_key
+    async with streamablehttp_client(settings.merchant_mcp_url, headers=_mcp_headers) as (read, write, _):
         async with ClientSession(read, write, elicitation_callback=on_elicitation) as session:
             await session.initialize()
             tools = await load_mcp_tools(session)
+            # TLS verification is ON by default; only an explicit opt-out env
+            # (for local self-signed LLM endpoints) can disable it. Never ship
+            # with verification off.
+            _tls_verify = os.environ.get("LLM_TLS_VERIFY", "true").lower() not in ("0", "false", "no")
             model = init_chat_model(
                 model=settings.llm_model,
                 model_provider=settings.llm_provider,
                 api_key=settings.llm_api_key,
                 base_url=settings.llm_base_url,
-                http_async_client=httpx.AsyncClient(verify=False)
+                http_async_client=httpx.AsyncClient(verify=_tls_verify)
             )
             agent = create_agent(
                 model=model,
@@ -124,17 +165,19 @@ async def lifespan(app: FastAPI):
             )
             yield
 
-async def send_message(message) -> dict:
+async def send_message(message, session_id: str) -> dict:
     if agent is None:
         raise RuntimeError("Agent not initialized. Ensure lifespan is set up correctly.")
     response = await agent.ainvoke(
         {"messages": [message]},
-        config=RunnableConfig(configurable={"thread_id": str(current_thread_id)})
+        config=RunnableConfig(configurable={"thread_id": _thread_id_for(session_id)})
     )
     # Filter the assistant output for card-credential leakage before it leaves
-    # the service (defense against injection-driven exfiltration).
-    content = redact_sensitive(response["messages"][-1].content)
-    return json.loads(content)
+    # the service (defense against injection-driven exfiltration). Redaction runs
+    # on the parsed string fields (see _redact_dict) rather than the raw JSON so
+    # it cannot corrupt Luhn-valid numeric identifiers like order ids.
+    data = json.loads(response["messages"][-1].content)
+    return _redact_dict(data)
 
 AGENT_PROMPT="""
 You are an AI shopping assistant designed to provide personalized product recommendations and seamless checkout experiences.

@@ -389,14 +389,9 @@ async def checkout_cart(
         'name_on_card': checkout_data.get('name_on_card') or checkout_data.get('cardholder_name')
     }
 
-    # If no payment data provided (e.g., from MCP agent demo), use mock data
-    if not any([payment_data['card_number'], payment_data['expiry_date'], payment_data['cvv']]):
-        payment_data = {
-            'card_number': '4111111111111111',  # Demo Visa card
-            'expiry_date': '12/25',
-            'cvv': '123',
-            'name_on_card': checkout_data.get('customer_name', 'Demo Customer')
-        }
+    # Payment data must be supplied by the caller. We do NOT substitute a
+    # hardcoded demo card on empty input — that would let checkout succeed and
+    # create a real order without any payment instrument.
 
     # Validate payment information is provided
     if not all([payment_data['card_number'], payment_data['expiry_date'], payment_data['cvv']]):

@@ -157,31 +157,42 @@ const CheckoutPage = () => {
         cvv: formData.cvv,
         name_on_card: formData.nameOnCard,
         // Additional contact info
-        newsletter: formData.newsletter,
-        // Full form data for reference
-        form_data: formData
+        newsletter: formData.newsletter
+        // NOTE: do not include the full form_data here — it would duplicate the
+        // raw PAN/CVV/expiry in the request body.
       };
-      
+
       const response = await ordersAPI.checkout(sessionId, checkoutData);
-      
+
       // Clear the cart after successful checkout
       await clearCart();
-      
-      console.log("About to navigate to order success page with:", {
-        order: response.data.order,
-        payment: response.data.payment,
-        customerInfo: formData
-      });
-      // Navigate to success page with order details
-      navigate('/order-success', { 
-        state: { 
+
+      // Pass only non-sensitive fields to the success page. Never put PAN, CVV,
+      // expiry, or name-on-card into navigation state (persists in history and
+      // is readable via history.state / extensions).
+      const customerInfo = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        company: formData.company,
+        address1: formData.address1,
+        address2: formData.address2,
+        city: formData.city,
+        state: formData.state,
+        zipCode: formData.zipCode,
+        country: formData.country,
+        specialInstructions: formData.specialInstructions,
+      };
+
+      // Navigate to success page with order details (no card data logged or passed)
+      navigate('/order-success', {
+        state: {
           order: response.data.order,
           payment: response.data.payment,
-          customerInfo: formData 
+          customerInfo
         }
       });
-
-      console.log("Navigation to order success page complete.");
     } catch (err) {
       setError('Failed to process your order. Please try again.');
       console.error('Checkout error:', err);

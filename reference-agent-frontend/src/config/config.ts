@@ -12,13 +12,16 @@ interface EnvironmentConfig {
   vppBaseURL?: string;
   apiKey?: string;
   clientAppId?: string;
+  agentApiKey?: string;
 }
 
 export const config: EnvironmentConfig = {
   backendBaseURL: 'http://localhost:8000',
   vppBaseURL: 'https://sbx.vts.auth.visa.com',
   apiKey: import.meta.env.VITE_VPP_API_KEY,
-  clientAppId: import.meta.env.VITE_VPP_CLIENT_APP_ID
+  clientAppId: import.meta.env.VITE_VPP_CLIENT_APP_ID,
+  // Shared secret for authenticating to the agent backend (sent as X-Api-Key).
+  agentApiKey: import.meta.env.VITE_AGENT_API_KEY
 }
 export const PASSKEY_URL: string = `${config.vppBaseURL}/vts-auth/authenticate?apikey=${config.apiKey}&clientAppID=${config.clientAppId}`;
 

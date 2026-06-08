@@ -9,7 +9,7 @@
  */
 
 
-import { randomUUID } from 'node:crypto';
+import { randomUUID, timingSafeEqual } from 'node:crypto';
 import { type Request, type Response } from 'express';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
@@ -491,6 +491,26 @@ mcpServer.registerTool(
       // Call backend checkout API
       const response = await apiClient.post(`/cart/${session_id}/checkout`, checkoutData);
 
+      // Sanitize untrusted free-text in the checkout result before it re-enters
+      // the LLM context. This runs inside the open-credential checkout window,
+      // so it is as important as the search/cart sinks (per genai-dsr 6.6).
+      const nonce = randomUUID();
+      const sanitizedItems = Array.isArray(response.data.order.items)
+        ? response.data.order.items.map((item: any) => ({
+            ...item,
+            product_name: sanitizeUntrustedText(item.product_name, nonce),
+            ...(item.product
+              ? {
+                  product: {
+                    ...item.product,
+                    name: sanitizeUntrustedText(item.product.name, nonce),
+                    description: sanitizeUntrustedText(item.product.description, nonce),
+                  },
+                }
+              : {}),
+          }))
+        : response.data.order.items;
+
       const result = {
         content: [
           {
@@ -500,14 +520,14 @@ mcpServer.registerTool(
                 message: response.data.message,
                 order: {
                   order_number: response.data.order.order_number,
-                  customer_name: response.data.order.customer_name,
-                  customer_email: response.data.order.customer_email,
+                  customer_name: sanitizeUntrustedText(response.data.order.customer_name, nonce),
+                  customer_email: sanitizeUntrustedText(response.data.order.customer_email, nonce),
                   total_amount: response.data.order.total_amount,
                   subtotal: response.data.order.subtotal,
                   tax_amount: response.data.order.tax_amount,
                   shipping_cost: response.data.order.shipping_cost,
                   status: response.data.order.status,
-                  items: response.data.order.items,
+                  items: sanitizedItems,
                 },
                 payment: response.data.payment,
                 fulfillment: response.data.fulfillment,
@@ -542,6 +562,25 @@ async function main() {
     res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'");
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
+    next();
+  });
+
+  // Require a shared-secret API key on every MCP request (deny-by-default).
+  // Only the trusted agent backend (which sends X-Api-Key) may invoke tools;
+  // this closes the unauthenticated direct-tool-invocation exposure.
+  app.use((req: Request, res: Response, next: Function) => {
+    const expected = process.env.MCP_API_KEY;
+    if (!expected) {
+      res.status(500).json({ error: 'Server misconfiguration: MCP_API_KEY is not set' });
+      return;
+    }
+    const provided = req.headers['x-api-key'];
+    const ok = typeof provided === 'string' && provided.length === expected.length &&
+      timingSafeEqual(Buffer.from(provided), Buffer.from(expected));
+    if (!ok) {
+      res.status(401).json({ error: 'Invalid or missing API key' });
+      return;
+    }
     next();
   });
 

@@ -39,6 +39,32 @@ from src.utils.constants import (
     DEVICE_TYPE_DESKTOP, DEVICE_BRAND_UNKNOWN
 )
 
+# Substrings (case-insensitive) of JSON keys whose values are sensitive and must
+# not appear in the request/response logs surfaced to the browser. Covers PAN,
+# CVV/SAD, expiry, tokens, encrypted blobs, and secrets.
+_SENSITIVE_KEY_PARTS = (
+    "pan", "card_number", "cardnumber", "accountnumber", "cvv", "cvc",
+    "securitycode", "security_code", "expiry", "expirationdate", "expiration_date",
+    "paymenttoken", "dynamicdatavalue", "encpaymentinstrument", "encdata",
+    "enc_payment_instrument", "secret", "password", "sharedsecret", "authorization",
+)
+_REDACTED = "[REDACTED]"
+
+def _redact_log_payload(value):
+    """Recursively redact sensitive values in a request/response log payload."""
+    if isinstance(value, dict):
+        out = {}
+        for k, v in value.items():
+            key = str(k).lower().replace("-", "").replace("_", "")
+            if any(part.replace("_", "") in key for part in _SENSITIVE_KEY_PARTS):
+                out[k] = _REDACTED
+            else:
+                out[k] = _redact_log_payload(v)
+        return out
+    if isinstance(value, list):
+        return [_redact_log_payload(v) for v in value]
+    return value
+
 class VDPClient:
     def __init__(self, request: Request):
         self.vts_base_url = settings.vts_base_url
@@ -105,11 +131,12 @@ class VDPClient:
         if message_encrypted and self.mle_key_id != None:
             headers['keyId'] = self.mle_key_id
 
-        # Create the request log to return to the frontend
+        # Create the request log to return to the frontend (sensitive values
+        # such as PAN/CVV/tokens are redacted before leaving the server).
         request_log = {
             "method": method,
             "path": path,
-            "body": body
+            "body": _redact_log_payload(body)
         }
         
         # Make the HTTP request
@@ -131,7 +158,7 @@ class VDPClient:
         # Create the full request-response log to return to the frontend
         response_log = {
             "statusCode": response.status_code,
-            "body": response_json,
+            "body": _redact_log_payload(response_json),
             "correlationId": response.headers.get('X-CORRELATION-ID', 'unknown')
         }
         request_response_log = {

@@ -6,8 +6,8 @@
 #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-from uuid import UUID
-from fastapi import APIRouter
+from uuid import UUID, uuid4
+from fastapi import APIRouter, Header
 
 from src.dependencies import ChatServiceDep, CommerceServiceDep
 from src.schemas.commerce import AgenticCheckoutRequest, AgenticCheckoutResponse, Credentials
@@ -17,9 +17,12 @@ router = APIRouter()
 @router.post("/agent")
 async def handle_agentic_checkout(
     agentic_checkout_request: AgenticCheckoutRequest,
-    commerce_service: CommerceServiceDep
+    commerce_service: CommerceServiceDep,
+    x_session_id: str | None = Header(default=None),
 ) -> AgenticCheckoutResponse:
     """Authorizes an agentic intent and associated transaction(s)."""
     if agentic_checkout_request.user_agent:
         agentic_checkout_request.user_agent = base64url_encode(agentic_checkout_request.user_agent)
-    return await commerce_service.handle_agentic_checkout(agentic_checkout_request)
+    # Run checkout on the caller's conversation session (isolated by default).
+    session_id = x_session_id or str(uuid4())
+    return await commerce_service.handle_agentic_checkout(agentic_checkout_request, session_id)
