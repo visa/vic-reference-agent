@@ -389,9 +389,7 @@ async def checkout_cart(
         'name_on_card': checkout_data.get('name_on_card') or checkout_data.get('cardholder_name')
     }
 
-    # Payment data must be supplied by the caller. We do NOT substitute a
-    # hardcoded demo card on empty input — that would let checkout succeed and
-    # create a real order without any payment instrument.
+    # Payment data must be supplied by the caller; no hardcoded demo-card fallback.
 
     # Validate payment information is provided
     if not all([payment_data['card_number'], payment_data['expiry_date'], payment_data['cvv']]):

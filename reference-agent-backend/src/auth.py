@@ -8,21 +8,16 @@
 
 """API-key authentication for the reference agent backend.
 
-The agent backend exposes card, token, passkey, commerce, and chat operations
-that act on payment instruments and stored credentials. Every route requires a
-shared-secret API key in the `X-Api-Key` header, compared in constant time.
-Access is deny-by-default: if no `AGENT_API_KEY` is configured, requests are
-rejected (HTTP 500) rather than served.
-
-See web-application-dsr 4.3/4.8 (REST APIs must use a secure authentication
-mechanism) and customer-identity-access-dsr 4.4 (default deny-all). Closes the
-unauthenticated IDOR / provisioning / device-binding findings on these routes.
+Every route requires a shared-secret API key in the `X-Api-Key` header, compared
+in constant time. Deny-by-default: if `AGENT_API_KEY` is not configured, requests
+are rejected rather than served.
 """
 
-import os
 import secrets
 
 from fastapi import Header, HTTPException, status
+
+from src.config import settings
 
 
 def require_api_key(x_api_key: str | None = Header(default=None)) -> None:
@@ -32,7 +27,7 @@ def require_api_key(x_api_key: str | None = Header(default=None)) -> None:
         HTTPException 500: if the server is misconfigured (no key set).
         HTTPException 401: if the header is missing or does not match.
     """
-    expected = os.environ.get("AGENT_API_KEY")
+    expected = settings.agent_api_key
     if not expected:
         # Deny-by-default: never serve protected operations without a key.
         raise HTTPException(
@@ -40,7 +35,8 @@ def require_api_key(x_api_key: str | None = Header(default=None)) -> None:
             detail="Server misconfiguration: AGENT_API_KEY is not set.",
         )
 
-    if not x_api_key or not secrets.compare_digest(x_api_key, expected):
+    # Compare as bytes; compare_digest raises on non-ASCII str (a 500, not a 401).
+    if not x_api_key or not secrets.compare_digest(x_api_key.encode("utf-8"), expected.encode("utf-8")):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or missing API key.",

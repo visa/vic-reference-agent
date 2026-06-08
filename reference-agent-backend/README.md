@@ -37,6 +37,13 @@ LLM_PROVIDER=your-llm-provider   # e.g. openai
 LLM_API_KEY=your-llm-api-key
 LLM_MODEL=your-llm-model         # e.g. gpt-4.1
 LLM_BASE_URL=your-llm-base-url   # e.g. https://api.openai.com/v1
+LLM_TLS_VERIFY=true              # set false only for a local self-signed LLM endpoint
+
+# API-key authentication. AGENT_API_KEY is required on every request to this
+# backend; MCP_API_KEY is presented when connecting to the merchant MCP server.
+# (Under Docker Compose these come from the project-root .env.)
+AGENT_API_KEY=your-agent-api-key
+MCP_API_KEY=your-mcp-api-key
 
 # For all of the below configurations, please reach out to your Visa representative.
 

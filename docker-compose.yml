@@ -16,7 +16,7 @@ services:
       - "8001:8001"
     environment:
       # Shared secret required on every merchant API request (X-Api-Key).
-      - MERCHANT_API_KEY=${MERCHANT_API_KEY:?MERCHANT_API_KEY must be set (see .env.example)}
+      - MERCHANT_API_KEY=${MERCHANT_API_KEY:?MERCHANT_API_KEY must be set (see .env.sample)}
     volumes:
       - ./reference-merchant-backend/data:/app/data
     networks:
@@ -33,9 +33,9 @@ services:
     environment:
       - API_BASE_URL=http://reference-merchant-backend:8001
       # Same key, used by the MCP server to authenticate to the backend.
-      - MERCHANT_API_KEY=${MERCHANT_API_KEY:?MERCHANT_API_KEY must be set (see .env.example)}
+      - MERCHANT_API_KEY=${MERCHANT_API_KEY:?MERCHANT_API_KEY must be set (see .env.sample)}
       # Shared secret the MCP server requires on its own /mcp endpoint.
-      - MCP_API_KEY=${MCP_API_KEY:?MCP_API_KEY must be set (see .env.example)}
+      - MCP_API_KEY=${MCP_API_KEY:?MCP_API_KEY must be set (see .env.sample)}
     depends_on:
       - reference-merchant-backend
     networks:
@@ -52,9 +52,9 @@ services:
     environment:
       - MERCHANT_MCP_URL=http://reference-merchant-mcp:8002/mcp
       # Shared secret clients must present to call the agent backend (X-Api-Key).
-      - AGENT_API_KEY=${AGENT_API_KEY:?AGENT_API_KEY must be set (see .env.example)}
+      - AGENT_API_KEY=${AGENT_API_KEY:?AGENT_API_KEY must be set (see .env.sample)}
       # Shared secret the agent presents when connecting to the MCP server.
-      - MCP_API_KEY=${MCP_API_KEY:?MCP_API_KEY must be set (see .env.example)}
+      - MCP_API_KEY=${MCP_API_KEY:?MCP_API_KEY must be set (see .env.sample)}
     volumes:
       - ./reference-agent-backend/data:/app/data
     depends_on:
@@ -70,7 +70,7 @@ services:
       args:
         # Baked into the Vite bundle at build time so the storefront can
         # authenticate to the merchant backend.
-        - VITE_MERCHANT_API_KEY=${MERCHANT_API_KEY:?MERCHANT_API_KEY must be set (see .env.example)}
+        - VITE_MERCHANT_API_KEY=${MERCHANT_API_KEY:?MERCHANT_API_KEY must be set (see .env.sample)}
     container_name: reference-merchant-frontend
     ports:
       - "3001:3001"
@@ -87,7 +87,7 @@ services:
       args:
         # Baked into the Vite bundle so the agent frontend can authenticate
         # to the agent backend.
-        - VITE_AGENT_API_KEY=${AGENT_API_KEY:?AGENT_API_KEY must be set (see .env.example)}
+        - VITE_AGENT_API_KEY=${AGENT_API_KEY:?AGENT_API_KEY must be set (see .env.sample)}
     container_name: reference-agent-frontend
     ports:
       - "3000:3000"

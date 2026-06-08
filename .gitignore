@@ -5,3 +5,4 @@ __pycache__/
 docker-compose.override.yml
 pip.conf
 pip.crt
+.env

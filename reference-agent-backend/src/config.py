@@ -24,6 +24,16 @@ class Settings(BaseSettings):
     llm_api_key: str
     llm_model: str
     llm_base_url: str
+    # TLS verification for the outbound LLM client. Keep True for public
+    # providers (OpenAI/Anthropic); set LLM_TLS_VERIFY=false only for a local
+    # self-signed LLM endpoint.
+    llm_tls_verify: bool = True
+
+    # API-key auth shared secrets. Optional here so auth enforcement stays
+    # deny-by-default at request time (auth.py returns 500 when unset) and so
+    # importing settings never fails just because a key is absent.
+    agent_api_key: str | None = None
+    mcp_api_key: str | None = None
 
     # Visa Developer Platform (VDP) settings
     vts_base_url: str

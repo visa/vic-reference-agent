@@ -25,20 +25,10 @@ const PORT = 8002;
 const timestamp = () => new Date().toISOString();
 
 /**
- * Sanitize untrusted free-text fields that originate from the merchant catalog
- * (product name/description) before they are returned as MCP tool output and
- * injected into the LLM context.
- *
- * Catalog text is treated as untrusted data, never instructions. We:
- *  1. coerce to string and cap length to bound the injection surface,
- *  2. neutralize common prompt-injection / role-spoofing markers and any
- *     delimiter sequences (including our own boundary tokens), and
- *  3. wrap the value in clearly-labelled boundaries carrying a per-response
- *     random nonce so the model can distinguish data from instructions and an
- *     attacker cannot forge a closing boundary.
- *
- * Per genai-dsr 6.6 and mcp-dsr 3.1: all agent inputs, including externally
- * fetched data, must be validated/sanitized before use.
+ * Sanitize untrusted catalog free-text (product name/description) before it is
+ * returned as tool output and enters the LLM context. Caps length, neutralizes
+ * prompt-injection / role markers, and wraps the value in nonce-tagged
+ * «untrusted» boundaries the model can distinguish from instructions.
  */
 const MAX_UNTRUSTED_LEN = 2000;
 function sanitizeUntrustedText(value: unknown, nonce: string): string {
@@ -67,9 +57,7 @@ function sanitizeUntrustedText(value: unknown, nonce: string): string {
   return `«untrusted:${nonce}»${text}«/untrusted:${nonce}»`;
 }
 
-// Create axios client for backend API.
-// The merchant backend requires an API key (X-Api-Key); supply it from the
-// environment so this trusted server-to-server caller can authenticate.
+// Axios client for the backend API; sends the shared API key (X-Api-Key).
 const apiClient: AxiosInstance = axios.create({
   baseURL: `${API_BASE_URL}/api`,
   headers: {
@@ -492,8 +480,7 @@ mcpServer.registerTool(
       const response = await apiClient.post(`/cart/${session_id}/checkout`, checkoutData);
 
       // Sanitize untrusted free-text in the checkout result before it re-enters
-      // the LLM context. This runs inside the open-credential checkout window,
-      // so it is as important as the search/cart sinks (per genai-dsr 6.6).
+      // the LLM context.
       const nonce = randomUUID();
       const sanitizedItems = Array.isArray(response.data.order.items)
         ? response.data.order.items.map((item: any) => ({
@@ -565,9 +552,8 @@ async function main() {
     next();
   });
 
-  // Require a shared-secret API key on every MCP request (deny-by-default).
-  // Only the trusted agent backend (which sends X-Api-Key) may invoke tools;
-  // this closes the unauthenticated direct-tool-invocation exposure.
+  // Require the shared API key on every MCP request (deny-by-default), so only
+  // the agent backend can invoke tools.
   app.use((req: Request, res: Response, next: Function) => {
     const expected = process.env.MCP_API_KEY;
     if (!expected) {
@@ -575,8 +561,11 @@ async function main() {
       return;
     }
     const provided = req.headers['x-api-key'];
-    const ok = typeof provided === 'string' && provided.length === expected.length &&
-      timingSafeEqual(Buffer.from(provided), Buffer.from(expected));
+    // Compare byte lengths first; timingSafeEqual throws on a length mismatch.
+    const providedBuf = Buffer.from(typeof provided === 'string' ? provided : '', 'utf8');
+    const expectedBuf = Buffer.from(expected, 'utf8');
+    const ok = providedBuf.length === expectedBuf.length &&
+      timingSafeEqual(providedBuf, expectedBuf);
     if (!ok) {
       res.status(401).json({ error: 'Invalid or missing API key' });
       return;

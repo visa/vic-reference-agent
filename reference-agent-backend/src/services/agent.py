@@ -7,11 +7,9 @@
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 from contextlib import asynccontextmanager
-from contextvars import ContextVar
-from uuid import UUID, uuid4
+from uuid import uuid4
 from fastapi import FastAPI
 import httpx
-import os
 import re
 from langchain_mcp_adapters.tools import load_mcp_tools
 from mcp.client.streamable_http import streamablehttp_client
@@ -23,6 +21,7 @@ from langchain.agents import create_agent
 from langgraph.checkpoint.memory import InMemorySaver
 from langchain_core.runnables import RunnableConfig
 import json
+from typing import Any
 
 from src.config import settings
 from src.schemas.commerce import Credentials
@@ -34,19 +33,13 @@ agent = None
 # read or hijack each other's conversation history (was a shared module global).
 _session_threads: dict[str, str] = {}
 
-# Checkout credentials and the authorization flag are held in CONTEXTVARS, which
-# are local to the current asyncio task. Each request runs in its own task, so
-# one user's credentials can never bleed into another concurrent request (the
-# previous module-global design allowed a credential-theft race). The flag is
-# the gate that releases credentials to the MCP payment elicitation ONLY during
-# a server-initiated checkout — it cannot be flipped by anything the LLM emits,
-# so an injection-triggered checkout_cart during a search cannot exfiltrate data.
-_credentials_var: ContextVar[Credentials | None] = ContextVar(
-    "vic_current_credentials", default=None
-)
-_checkout_authorized_var: ContextVar[bool] = ContextVar(
-    "vic_checkout_authorized", default=False
-)
+# Checkout credentials, live only during a single server-initiated checkout (set
+# in store_credentials, cleared in complete_checkout's finally). on_elicitation
+# returns an error while this is None, so an injection-triggered checkout_cart
+# during a search can't exfiltrate card data. Module-level rather than a
+# ContextVar: the MCP elicitation callback runs in lifespan()'s receive-loop task
+# and can't see ContextVars set by the request task.
+_current_credentials: Credentials | None = None
 
 def _thread_id_for(session_id: str) -> str:
     """Return a stable thread id for a session, creating one on first use."""
@@ -62,19 +55,17 @@ def reset_thread(session_id: str) -> None:
     clear_credentials()
 
 def store_credentials(credentials: Credentials) -> None:
-    _credentials_var.set(credentials)
-    _checkout_authorized_var.set(True)
+    global _current_credentials
+    _current_credentials = credentials
 
 def clear_credentials() -> None:
-    _credentials_var.set(None)
-    _checkout_authorized_var.set(False)
+    global _current_credentials
+    _current_credentials = None
 
 async def on_elicitation(context: RequestContext, params: ElicitRequestParams) -> ElicitResult | ErrorData:
-    # Only release credentials during an authorized, server-initiated checkout.
-    # Reads the task-local contextvars set by the current request, so it cannot
-    # return another concurrent session's card data.
-    credentials = _credentials_var.get()
-    if not _checkout_authorized_var.get() or credentials is None:
+    # Release card data only while a checkout is in progress (see _current_credentials).
+    credentials = _current_credentials
+    if credentials is None:
         return ErrorData(
             code=INTERNAL_ERROR,
             message="No credentials available for checkout."
@@ -107,11 +98,8 @@ def _luhn_valid(digits: str) -> bool:
 
 def redact_sensitive(text: str) -> str:
     """Mask card-number- and CVV-like sequences in agent output so a prompt
-    injection cannot exfiltrate card credentials through the response body or
-    logs (genai-dsr 6.7: agent outputs must be checked for exfiltrative content).
-
-    Only digit runs that are PAN-length AND pass the Luhn check are masked, so
-    legitimate identifiers like order numbers and tracking codes are preserved."""
+    injection can't exfiltrate credentials. Only PAN-length, Luhn-valid digit
+    runs are masked, so order numbers and tracking codes are preserved."""
     def _mask_pan(match: re.Match) -> str:
         digits = re.sub(r"\D", "", match.group(0))
         if 13 <= len(digits) <= 19 and _luhn_valid(digits):
@@ -121,10 +109,9 @@ def redact_sensitive(text: str) -> str:
     redacted = _CVV_RE.sub("[REDACTED-CVV]", redacted)
     return redacted
 
-def _redact_dict(value):
-    """Recursively apply redact_sensitive to every string in a parsed JSON
-    structure. Operating on parsed values (not the raw JSON text) avoids
-    corrupting Luhn-valid numeric identifiers such as order ids/tracking codes."""
+def _redact_dict(value: Any) -> Any:
+    """Apply redact_sensitive to every string in a parsed JSON structure. Works on
+    parsed values, not raw JSON, so numeric identifiers aren't corrupted."""
     if isinstance(value, str):
         return redact_sensitive(value)
     if isinstance(value, dict):
@@ -136,26 +123,22 @@ def _redact_dict(value):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global agent
-    # Authenticate to the merchant MCP server with the shared API key so the
-    # MCP endpoint can reject unauthenticated direct tool invocation.
+    # Present the shared API key so the MCP server accepts this connection.
     _mcp_headers = {}
-    _mcp_key = os.environ.get("MCP_API_KEY")
-    if _mcp_key:
-        _mcp_headers["X-Api-Key"] = _mcp_key
+    if settings.mcp_api_key:
+        _mcp_headers["X-Api-Key"] = settings.mcp_api_key
     async with streamablehttp_client(settings.merchant_mcp_url, headers=_mcp_headers) as (read, write, _):
         async with ClientSession(read, write, elicitation_callback=on_elicitation) as session:
             await session.initialize()
             tools = await load_mcp_tools(session)
-            # TLS verification is ON by default; only an explicit opt-out env
-            # (for local self-signed LLM endpoints) can disable it. Never ship
-            # with verification off.
-            _tls_verify = os.environ.get("LLM_TLS_VERIFY", "true").lower() not in ("0", "false", "no")
+            # TLS verification on by default (correct for OpenAI/Anthropic); set
+            # LLM_TLS_VERIFY=false only for a local self-signed LLM endpoint.
             model = init_chat_model(
                 model=settings.llm_model,
                 model_provider=settings.llm_provider,
                 api_key=settings.llm_api_key,
                 base_url=settings.llm_base_url,
-                http_async_client=httpx.AsyncClient(verify=_tls_verify)
+                http_async_client=httpx.AsyncClient(verify=settings.llm_tls_verify)
             )
             agent = create_agent(
                 model=model,

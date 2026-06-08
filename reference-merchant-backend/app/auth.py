@@ -8,14 +8,9 @@
 
 """API-key authentication for the reference merchant backend.
 
-The merchant API exposes order/customer data and order-state mutations. All
-routes require a shared-secret API key supplied in the `X-Api-Key` header and
-compared in constant time. Access is deny-by-default: if the server has no
-`MERCHANT_API_KEY` configured, every request is rejected (HTTP 500) rather than
-silently allowed.
-
-See web-application-dsr 4.3/4.8 (REST APIs must use a secure authentication
-mechanism) and customer-identity-access-dsr 4.4 (default deny-all).
+All routes require a shared-secret API key in the `X-Api-Key` header, compared in
+constant time. Deny-by-default: if `MERCHANT_API_KEY` is not configured, every
+request is rejected rather than served.
 """
 
 import os
@@ -39,7 +34,8 @@ def require_api_key(x_api_key: str | None = Header(default=None)) -> None:
             detail="Server misconfiguration: MERCHANT_API_KEY is not set.",
         )
 
-    if not x_api_key or not secrets.compare_digest(x_api_key, expected):
+    # Compare as bytes; compare_digest raises on non-ASCII str (a 500, not a 401).
+    if not x_api_key or not secrets.compare_digest(x_api_key.encode("utf-8"), expected.encode("utf-8")):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or missing API key.",

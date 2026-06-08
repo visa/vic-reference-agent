@@ -62,6 +62,10 @@ The application requires a `.env` file. Copy `.env.sample` to `.env` and fill in
 # Visa Payment Passkey (VPP) Configuration
 VITE_VPP_API_KEY=your-vpp-api-key
 VITE_VPP_CLIENT_APP_ID=your-vpp-client-app-id
+
+# Sent as X-Api-Key on every call to the agent backend; must match AGENT_API_KEY
+# there. (Under Docker Compose this comes from the project-root .env.)
+VITE_AGENT_API_KEY=your-agent-api-key
 ```
 
 ## Quick Start

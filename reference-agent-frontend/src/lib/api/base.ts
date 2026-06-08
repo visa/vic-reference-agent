@@ -53,11 +53,9 @@ class BaseApiService {
         'Content-Type': 'application/json',
       };
 
-      // Authenticate to the agent backend with the shared API key, and tag the
-      // request with a stable per-tab session id so conversations are isolated
-      // per user (the backend keys its LangGraph thread + credentials on it).
-      // Only attach these to agent-backend calls (relative endpoints or the
-      // configured base URL) so nothing is sent to third-party/absolute URLs.
+      // Tag agent-backend calls with the shared API key and a stable per-tab
+      // session id (the backend isolates each conversation by it). Don't send
+      // these to absolute third-party URLs.
       const isBackendCall =
         !endpoint.startsWith('http') || url.startsWith(config.backendBaseURL);
       if (isBackendCall) {

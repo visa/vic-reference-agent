@@ -18,8 +18,7 @@ const OrdersPage = () => {
   const [searchEmail, setSearchEmail] = useState('');
 
   useEffect(() => {
-    // Orders are scoped to a customer email; prompt for one rather than
-    // loading every customer's orders on mount.
+    // Orders are scoped to a customer email; don't load all orders on mount.
   }, []);
 
   const loadOrders = async (customerEmail = '') => {

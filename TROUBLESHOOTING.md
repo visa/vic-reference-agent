@@ -6,6 +6,7 @@ Common problems and solutions when running the application with Docker Compose.
 
 **Services won't start:**
 - Ensure all required ports are available (3000, 3001, 8000, 8001, 8002)
+- If Compose exits with `MERCHANT_API_KEY must be set` (or `AGENT_API_KEY`/`MCP_API_KEY`), create the project-root `.env` from `.env.sample` and set the three keys
 - Check that `.env` files are configured in both backend and frontend
 - Verify SSL certificates are generated in reference-agent-frontend
 
@@ -34,6 +35,16 @@ Common problems and solutions when running the application with Docker Compose.
 - Check that reference-merchant-mcp container is running
 - Review backend logs: `docker-compose logs reference-agent-backend`
 - Ensure LLM API key is valid and has sufficient credits
+- TLS errors reaching a self-signed LLM endpoint: set `LLM_TLS_VERIFY=false` in the agent backend `.env` (leave it `true` for OpenAI/Anthropic)
+
+## Authentication Issues
+
+**`401 Invalid or missing API key`:**
+- The frontends bake the key in at build time — rebuild after changing it: `docker-compose up --build`
+- Ensure the shared keys match across services: `MERCHANT_API_KEY` (merchant backend ↔ MCP ↔ merchant frontend), `AGENT_API_KEY` (agent backend ↔ agent frontend), `MCP_API_KEY` (agent backend ↔ MCP server)
+
+**`500 Server misconfiguration: ... is not set`:**
+- The service is running without its API key. Set it in the environment (project-root `.env` for Compose) and restart
 
 **Passkey authentication fails:**
 - Ensure VPP credentials are configured in frontend `.env`

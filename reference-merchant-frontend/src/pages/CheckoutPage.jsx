@@ -158,8 +158,7 @@ const CheckoutPage = () => {
         name_on_card: formData.nameOnCard,
         // Additional contact info
         newsletter: formData.newsletter
-        // NOTE: do not include the full form_data here — it would duplicate the
-        // raw PAN/CVV/expiry in the request body.
+        // Don't include the full form_data — it would duplicate raw PAN/CVV/expiry.
       };
 
       const response = await ordersAPI.checkout(sessionId, checkoutData);
@@ -167,9 +166,8 @@ const CheckoutPage = () => {
       // Clear the cart after successful checkout
       await clearCart();
 
-      // Pass only non-sensitive fields to the success page. Never put PAN, CVV,
-      // expiry, or name-on-card into navigation state (persists in history and
-      // is readable via history.state / extensions).
+      // Pass only non-sensitive fields to the success page — never card data,
+      // which would persist in navigation history.
       const customerInfo = {
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -185,7 +183,7 @@ const CheckoutPage = () => {
         specialInstructions: formData.specialInstructions,
       };
 
-      // Navigate to success page with order details (no card data logged or passed)
+      // Navigate to success page with order details
       navigate('/order-success', {
         state: {
           order: response.data.order,

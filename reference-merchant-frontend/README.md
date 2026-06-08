@@ -24,13 +24,18 @@
 ### Required Services
 - **Reference Merchant Backend** running on port 8001. See [reference-merchant-backend](../reference-merchant-backend/README.md) for setup instructions.
 
+## Environment Configuration
+
+The frontend sends an API key (`X-Api-Key`) on every call to the merchant backend. `VITE_MERCHANT_API_KEY` is baked into the bundle at build time and must match `MERCHANT_API_KEY` on the backend. For local runs, copy `.env.sample` to `.env` and set it. Under Docker Compose it is supplied from the project-root `.env`.
+
 ## Quick Start
 
 ### Running with Docker (Recommended)
 
 ```bash
-# Build the image
-docker build -t reference-merchant-frontend .
+# Build the image (the API key is baked in at build time)
+docker build -t reference-merchant-frontend \
+  --build-arg VITE_MERCHANT_API_KEY=your-merchant-api-key .
 
 # Run the container
 docker run -p 3001:3001 reference-merchant-frontend
@@ -39,6 +44,10 @@ docker run -p 3001:3001 reference-merchant-frontend
 ### Running Locally
 
 ```bash
+# Set up environment configuration
+cp .env.sample .env
+# Edit .env and set VITE_MERCHANT_API_KEY
+
 # Install dependencies
 npm install
 

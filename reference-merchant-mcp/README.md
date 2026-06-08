@@ -23,6 +23,10 @@
 ### Required Services
 - **Reference Merchant Backend** running on port 8001. See [reference-merchant-backend](../reference-merchant-backend/README.md) for setup instructions.
 
+## Environment Configuration
+
+The server requires an API key on its own `/mcp` endpoint (`MCP_API_KEY`) and presents the merchant backend's key (`MERCHANT_API_KEY`) when calling it. Set both in the environment before running. Under Docker Compose they are supplied from the project-root `.env`.
+
 ## Quick Start
 
 ### Running with Docker (Recommended)
@@ -32,7 +36,10 @@
 docker build -t reference-merchant-mcp .
 
 # Run the container
-docker run -p 8002:8002 reference-merchant-mcp
+docker run -p 8002:8002 \
+  -e MCP_API_KEY=your-mcp-api-key \
+  -e MERCHANT_API_KEY=your-merchant-api-key \
+  reference-merchant-mcp
 ```
 
 ### Running Locally
@@ -41,7 +48,9 @@ docker run -p 8002:8002 reference-merchant-mcp
 # Install dependencies
 npm install
 
-# Start in development mode
+# Set the API keys, then start in development mode
+export MCP_API_KEY=your-mcp-api-key
+export MERCHANT_API_KEY=your-merchant-api-key
 npm run dev
 ```
 

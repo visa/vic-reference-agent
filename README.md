@@ -114,6 +114,14 @@ cd ..
 
 ### 2. Configure Environment Variables
 
+Set up the shared API keys used by Docker Compose (project root):
+
+```bash
+cp .env.sample .env
+# Edit .env and set MERCHANT_API_KEY, AGENT_API_KEY, and MCP_API_KEY
+# Generate strong values, e.g.: openssl rand -hex 32
+```
+
 Set up the reference-agent-backend environment:
 
 ```bash

@@ -40,9 +40,8 @@ class ChatService:
                 order_summary=order_summary
             )
         except Exception as e:
-            # Log only the exception type, not exc_info/message: a traceback
-            # (e.g. a JSONDecodeError) can embed the raw model output which may
-            # contain card data. Avoid leaking sensitive content to logs.
+            # Log only the exception type; a traceback can embed raw model output
+            # containing card data.
             logging.error("Error processing message: %s", type(e).__name__)
             return ChatResponse(response_message="An error occurred while processing your message. Please try again later.")
 
@@ -53,8 +52,8 @@ class ChatService:
             checkout_response = AgenticCheckoutResponse(**response_json)
             return checkout_response
         except Exception as e:
-            # Log only the exception type, not exc_info/message: a checkout
-            # traceback can embed response bodies / credentials. Keep logs clean.
+            # Log only the exception type; a traceback can embed response bodies
+            # or credentials.
             logging.error("Error completing checkout: %s", type(e).__name__)
             raise RuntimeError("An error occurred while completing the checkout. Please try again later.")
         finally:

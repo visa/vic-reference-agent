@@ -39,9 +39,8 @@ from src.utils.constants import (
     DEVICE_TYPE_DESKTOP, DEVICE_BRAND_UNKNOWN
 )
 
-# Substrings (case-insensitive) of JSON keys whose values are sensitive and must
-# not appear in the request/response logs surfaced to the browser. Covers PAN,
-# CVV/SAD, expiry, tokens, encrypted blobs, and secrets.
+# Substrings of JSON keys whose values are redacted from the request/response
+# logs surfaced to the browser (PAN, CVV, expiry, tokens, encrypted blobs, secrets).
 _SENSITIVE_KEY_PARTS = (
     "pan", "card_number", "cardnumber", "accountnumber", "cvv", "cvc",
     "securitycode", "security_code", "expiry", "expirationdate", "expiration_date",
@@ -131,8 +130,7 @@ class VDPClient:
         if message_encrypted and self.mle_key_id != None:
             headers['keyId'] = self.mle_key_id
 
-        # Create the request log to return to the frontend (sensitive values
-        # such as PAN/CVV/tokens are redacted before leaving the server).
+        # Request log returned to the frontend (sensitive values redacted).
         request_log = {
             "method": method,
             "path": path,

@@ -31,8 +31,7 @@ async def get_orders(
     db: AsyncSession = Depends(get_db)
 ):
     """Get orders for a specific customer (filtered by email)."""
-    # Require an explicit customer scope so this endpoint cannot be used to
-    # enumerate every customer's orders (PII) by omitting the filter.
+    # Require a customer scope so this can't be used to enumerate all orders.
     if not customer_email:
         raise HTTPException(
             status_code=400,

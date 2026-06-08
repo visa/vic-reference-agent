@@ -78,8 +78,7 @@ app.add_middleware(
     allow_headers=["*"],  # Allow all headers
 )
 
-# Include routers. All routes require a valid X-Api-Key (deny-by-default);
-# the reference agent frontend supplies it via VITE_AGENT_API_KEY.
+# Include routers. All routes require a valid X-Api-Key (deny-by-default).
 _auth = [Depends(require_api_key)]
 app.include_router(cards.router, prefix="/cards", tags=["cards"], dependencies=_auth)
 app.include_router(commerce.router, prefix="/intents", tags=["intents"], dependencies=_auth)
