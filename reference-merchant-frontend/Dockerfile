@@ -23,6 +23,11 @@ RUN npm ci
 # Copy source code
 COPY . .
 
+# Merchant API key for authenticated calls to the backend. Provided as a build
+# arg and exposed to Vite (must be VITE_-prefixed) at build time.
+ARG VITE_MERCHANT_API_KEY
+ENV VITE_MERCHANT_API_KEY=$VITE_MERCHANT_API_KEY
+
 # Build the React app
 RUN npm run build
 

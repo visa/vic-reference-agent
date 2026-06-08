@@ -24,11 +24,59 @@ const PORT = 8002;
 // Utility function for timestamps
 const timestamp = () => new Date().toISOString();
 
-// Create axios client for backend API
+/**
+ * Sanitize untrusted free-text fields that originate from the merchant catalog
+ * (product name/description) before they are returned as MCP tool output and
+ * injected into the LLM context.
+ *
+ * Catalog text is treated as untrusted data, never instructions. We:
+ *  1. coerce to string and cap length to bound the injection surface,
+ *  2. neutralize common prompt-injection / role-spoofing markers and any
+ *     delimiter sequences (including our own boundary tokens), and
+ *  3. wrap the value in clearly-labelled boundaries carrying a per-response
+ *     random nonce so the model can distinguish data from instructions and an
+ *     attacker cannot forge a closing boundary.
+ *
+ * Per genai-dsr 6.6 and mcp-dsr 3.1: all agent inputs, including externally
+ * fetched data, must be validated/sanitized before use.
+ */
+const MAX_UNTRUSTED_LEN = 2000;
+function sanitizeUntrustedText(value: unknown, nonce: string): string {
+  let text = typeof value === 'string' ? value : String(value ?? '');
+
+  // Bound the injection surface.
+  if (text.length > MAX_UNTRUSTED_LEN) {
+    text = text.slice(0, MAX_UNTRUSTED_LEN) + '…[truncated]';
+  }
+
+  text = text
+    // Strip our own boundary markers so they cannot be forged in the data.
+    .replace(/«\/?untrusted[^»]*»/gi, '')
+    // Neutralize angle-bracket / backtick delimiters used to fake structure.
+    .replace(/[<>`]/g, ' ')
+    // Defang chat role / system markers (e.g. "system:", "assistant:", "<|im_start|>").
+    .replace(/\|?\b(system|assistant|user|developer|tool)\b\s*:/gi, '$1​:')
+    .replace(/<\|[^|]*\|>/g, ' ')
+    // Defang the most common injection imperative without dropping legitimate
+    // product copy: insert a zero-width break so it is no longer a directive.
+    .replace(
+      /\b(ignore|disregard|override|forget)\b(\s+(all|any|the|your|previous|prior|above)\b)/gi,
+      '$1​$2'
+    );
+
+  return `«untrusted:${nonce}»${text}«/untrusted:${nonce}»`;
+}
+
+// Create axios client for backend API.
+// The merchant backend requires an API key (X-Api-Key); supply it from the
+// environment so this trusted server-to-server caller can authenticate.
 const apiClient: AxiosInstance = axios.create({
   baseURL: `${API_BASE_URL}/api`,
   headers: {
     'Content-Type': 'application/json',
+    ...(process.env.MERCHANT_API_KEY
+      ? { 'X-Api-Key': process.env.MERCHANT_API_KEY }
+      : {}),
   },
 });
 
@@ -116,12 +164,15 @@ mcpServer.registerTool(
 
       const response = await apiClient.get('/products/', { params });
 
+      // Untrusted free-text catalog fields are sanitized + delimited before
+      // entering the LLM context (see sanitizeUntrustedText).
+      const nonce = randomUUID();
       const products = response.data.products.map((p: any) => ({
         id: p.id,
-        name: p.name,
-        description: p.description,
+        name: sanitizeUntrustedText(p.name, nonce),
+        description: sanitizeUntrustedText(p.description, nonce),
         price: p.price,
-        category: p.category,
+        category: sanitizeUntrustedText(p.category, nonce),
         stock_quantity: p.stock_quantity,
         image_url: p.image_url,
       }));
@@ -224,9 +275,11 @@ mcpServer.registerTool(
       const response = await apiClient.get(`/cart/${session_id}`);
 
       const cart = response.data;
+      // Untrusted product name is sanitized + delimited before reaching the LLM.
+      const nonce = randomUUID();
       const items = cart.items.map((item: any) => ({
         product_id: item.product.id,
-        product_name: item.product.name,
+        product_name: sanitizeUntrustedText(item.product.name, nonce),
         quantity: item.quantity,
         price: item.product.price,
         total: item.product.price * item.quantity,
@@ -293,9 +346,11 @@ mcpServer.registerTool(
       });
 
       const cart = response.data;
+      // Untrusted product name is sanitized + delimited before reaching the LLM.
+      const nonce = randomUUID();
       const items = cart.items.map((item: any) => ({
         product_id: item.product.id,
-        product_name: item.product.name,
+        product_name: sanitizeUntrustedText(item.product.name, nonce),
         quantity: item.quantity,
         price: item.product.price,
         total: item.product.price * item.quantity,

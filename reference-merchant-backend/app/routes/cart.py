@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
 from sqlalchemy.orm import selectinload
 from app.database.database import get_db
+from app.auth import require_api_key
 from app.models.models import (
     Cart as CartModel,
     CartItem as CartItemModel,
@@ -27,7 +28,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/cart", tags=["cart"])
+router = APIRouter(prefix="/cart", tags=["cart"], dependencies=[Depends(require_api_key)])
 
 def calculate_cart_totals(cart_items):
     """Calculate subtotal, tax, shipping, and total for the cart"""

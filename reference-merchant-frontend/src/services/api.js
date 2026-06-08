@@ -11,10 +11,16 @@ import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:8001/api';
 
+// The merchant backend requires an API key (X-Api-Key), supplied at build time
+// via VITE_MERCHANT_API_KEY. Note: a key shipped in a browser bundle is not a
+// strong secret; this matches the reference DSR API-key pattern for this demo.
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
+    ...(import.meta.env.VITE_MERCHANT_API_KEY
+      ? { 'X-Api-Key': import.meta.env.VITE_MERCHANT_API_KEY }
+      : {}),
   },
 });
 

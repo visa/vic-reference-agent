@@ -18,15 +18,21 @@ const OrdersPage = () => {
   const [searchEmail, setSearchEmail] = useState('');
 
   useEffect(() => {
-    loadOrders();
+    // Orders are scoped to a customer email; prompt for one rather than
+    // loading every customer's orders on mount.
   }, []);
 
   const loadOrders = async (customerEmail = '') => {
+    // The orders API requires a customer email scope (no enumerate-all).
+    if (!customerEmail) {
+      setOrders([]);
+      setError('Enter your email address to view your orders.');
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
-      const params = customerEmail ? { customer_email: customerEmail } : {};
-      const response = await ordersAPI.getOrders(params);
+      const response = await ordersAPI.getOrders({ customer_email: customerEmail });
       setOrders(response.data.orders);
     } catch (err) {
       setError('Failed to load orders. Please try again.');

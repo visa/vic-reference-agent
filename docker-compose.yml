@@ -14,6 +14,9 @@ services:
     container_name: reference-merchant-backend
     ports:
       - "8001:8001"
+    environment:
+      # Shared secret required on every merchant API request (X-Api-Key).
+      - MERCHANT_API_KEY=${MERCHANT_API_KEY:?MERCHANT_API_KEY must be set (see .env.example)}
     volumes:
       - ./reference-merchant-backend/data:/app/data
     networks:
@@ -29,6 +32,8 @@ services:
       - "8002:8002"
     environment:
       - API_BASE_URL=http://reference-merchant-backend:8001
+      # Same key, used by the MCP server to authenticate to the backend.
+      - MERCHANT_API_KEY=${MERCHANT_API_KEY:?MERCHANT_API_KEY must be set (see .env.example)}
     depends_on:
       - reference-merchant-backend
     networks:
@@ -56,6 +61,10 @@ services:
     build:
       context: ./reference-merchant-frontend
       dockerfile: Dockerfile
+      args:
+        # Baked into the Vite bundle at build time so the storefront can
+        # authenticate to the merchant backend.
+        - VITE_MERCHANT_API_KEY=${MERCHANT_API_KEY:?MERCHANT_API_KEY must be set (see .env.example)}
     container_name: reference-merchant-frontend
     ports:
       - "3001:3001"

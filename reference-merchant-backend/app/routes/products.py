@@ -12,12 +12,13 @@ from sqlalchemy import select, and_, or_, func
 from typing import Optional
 import logging
 from app.database.database import get_db
+from app.auth import require_api_key
 from app.models.models import Product as ProductModel
 from app.schemas import Product, ProductList
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/products", tags=["products"])
+router = APIRouter(prefix="/products", tags=["products"], dependencies=[Depends(require_api_key)])
 
 @router.get("/", response_model=ProductList)
 async def search_products(
