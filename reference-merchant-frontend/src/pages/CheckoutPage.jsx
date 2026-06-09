@@ -157,31 +157,40 @@ const CheckoutPage = () => {
         cvv: formData.cvv,
         name_on_card: formData.nameOnCard,
         // Additional contact info
-        newsletter: formData.newsletter,
-        // Full form data for reference
-        form_data: formData
+        newsletter: formData.newsletter
+        // Don't include the full form_data — it would duplicate raw PAN/CVV/expiry.
       };
-      
+
       const response = await ordersAPI.checkout(sessionId, checkoutData);
-      
+
       // Clear the cart after successful checkout
       await clearCart();
-      
-      console.log("About to navigate to order success page with:", {
-        order: response.data.order,
-        payment: response.data.payment,
-        customerInfo: formData
-      });
+
+      // Pass only non-sensitive fields to the success page — never card data,
+      // which would persist in navigation history.
+      const customerInfo = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        company: formData.company,
+        address1: formData.address1,
+        address2: formData.address2,
+        city: formData.city,
+        state: formData.state,
+        zipCode: formData.zipCode,
+        country: formData.country,
+        specialInstructions: formData.specialInstructions,
+      };
+
       // Navigate to success page with order details
-      navigate('/order-success', { 
-        state: { 
+      navigate('/order-success', {
+        state: {
           order: response.data.order,
           payment: response.data.payment,
-          customerInfo: formData 
+          customerInfo
         }
       });
-
-      console.log("Navigation to order success page complete.");
     } catch (err) {
       setError('Failed to process your order. Please try again.');
       console.error('Checkout error:', err);

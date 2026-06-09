@@ -21,6 +21,10 @@
 - **Docker** (recommended for running the application)
 - **Python** 3.12+ and **pip** (only required for local development without Docker)
 
+## Environment Configuration
+
+The backend requires an API key on every request (`X-Api-Key`). Set `MERCHANT_API_KEY` in the environment before running; the merchant MCP server and merchant frontend must use the same value. Under Docker Compose it is supplied from the project-root `.env`.
+
 ## Quick Start
 
 ### Running with Docker (Recommended)
@@ -31,6 +35,7 @@ docker build -t reference-merchant-backend .
 
 # Run the container
 docker run -p 8001:8001 \
+  -e MERCHANT_API_KEY=your-merchant-api-key \
   -v $(pwd)/data:/app/data \
   reference-merchant-backend
 ```
@@ -50,7 +55,8 @@ pip install -r requirements.txt
 # Initialize database with sample data
 python create_sample_data.py
 
-# Run the server
+# Set the API key, then run the server
+export MERCHANT_API_KEY=your-merchant-api-key
 uvicorn app.main:app --host 0.0.0.0 --port 8001
 ```
 

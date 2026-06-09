@@ -6,22 +6,33 @@
 #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-from fastapi import APIRouter, status
+from uuid import uuid4
+from fastapi import APIRouter, Header, status
 from src.dependencies import ChatServiceDep
 from src.schemas.chat import ChatRequest, ChatResponse
 from src.services.agent import reset_thread
 
 router = APIRouter()
 
+# Conversations are isolated per client-supplied session id. A missing header
+# falls back to a fresh uuid so the caller stays isolated (no shared global
+# thread) rather than sharing conversation state with other users.
+def _session_id(x_session_id: str | None) -> str:
+    return x_session_id or str(uuid4())
+
 @router.post("")
 async def chat(
     request: ChatRequest,
-    chat_service: ChatServiceDep
+    chat_service: ChatServiceDep,
+    x_session_id: str | None = Header(default=None),
 ) -> ChatResponse:
-    return await chat_service.process_message(request.message, request.products)
+    return await chat_service.process_message(
+        request.message, _session_id(x_session_id), request.products
+    )
 
 @router.post("/reset", status_code=status.HTTP_204_NO_CONTENT)
 def reset_chat(
-    chat_service: ChatServiceDep
+    chat_service: ChatServiceDep,
+    x_session_id: str | None = Header(default=None),
 ) -> None:
-    reset_thread()
+    reset_thread(_session_id(x_session_id))

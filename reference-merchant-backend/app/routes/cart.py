@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
 from sqlalchemy.orm import selectinload
 from app.database.database import get_db
+from app.auth import require_api_key
 from app.models.models import (
     Cart as CartModel,
     CartItem as CartItemModel,
@@ -27,7 +28,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/cart", tags=["cart"])
+router = APIRouter(prefix="/cart", tags=["cart"], dependencies=[Depends(require_api_key)])
 
 def calculate_cart_totals(cart_items):
     """Calculate subtotal, tax, shipping, and total for the cart"""
@@ -388,14 +389,7 @@ async def checkout_cart(
         'name_on_card': checkout_data.get('name_on_card') or checkout_data.get('cardholder_name')
     }
 
-    # If no payment data provided (e.g., from MCP agent demo), use mock data
-    if not any([payment_data['card_number'], payment_data['expiry_date'], payment_data['cvv']]):
-        payment_data = {
-            'card_number': '4111111111111111',  # Demo Visa card
-            'expiry_date': '12/25',
-            'cvv': '123',
-            'name_on_card': checkout_data.get('customer_name', 'Demo Customer')
-        }
+    # Payment data must be supplied by the caller; no hardcoded demo-card fallback.
 
     # Validate payment information is provided
     if not all([payment_data['card_number'], payment_data['expiry_date'], payment_data['cvv']]):

@@ -22,13 +22,13 @@ class ChatService:
     def __init__(self, card_repo: CardRepository):
         self.card_repo = card_repo
 
-    async def process_message(self, message: str, products: List[ProductInput] | None = None) -> ChatResponse:
+    async def process_message(self, message: str, session_id: str, products: List[ProductInput] | None = None) -> ChatResponse:
         try:
             formatted_message = f"""
             User Message: {message}
             Selected Products: {products}
             """
-            response_json = await send_message(HumanMessage(content=formatted_message))
+            response_json = await send_message(HumanMessage(content=formatted_message), session_id)
             order_summary = response_json.get("order_summary")
             if order_summary:
                 active_cards = await self.card_repo.get_all_active()
@@ -40,17 +40,21 @@ class ChatService:
                 order_summary=order_summary
             )
         except Exception as e:
-            logging.error("Error processing message", exc_info=True)
+            # Log only the exception type; a traceback can embed raw model output
+            # containing card data.
+            logging.error("Error processing message: %s", type(e).__name__)
             return ChatResponse(response_message="An error occurred while processing your message. Please try again later.")
 
-    async def complete_checkout(self, credentials: Credentials) -> AgenticCheckoutResponse:
+    async def complete_checkout(self, credentials: Credentials, session_id: str) -> AgenticCheckoutResponse:
         try:
             store_credentials(credentials)
-            response_json = await send_message(SystemMessage(content="COMPLETE CHECKOUT"))
+            response_json = await send_message(SystemMessage(content="COMPLETE CHECKOUT"), session_id)
             checkout_response = AgenticCheckoutResponse(**response_json)
             return checkout_response
         except Exception as e:
-            logging.error("Error completing checkout", exc_info=True)
+            # Log only the exception type; a traceback can embed response bodies
+            # or credentials.
+            logging.error("Error completing checkout: %s", type(e).__name__)
             raise RuntimeError("An error occurred while completing the checkout. Please try again later.")
         finally:
             clear_credentials()

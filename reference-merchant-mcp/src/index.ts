@@ -9,7 +9,7 @@
  */
 
 
-import { randomUUID } from 'node:crypto';
+import { randomUUID, timingSafeEqual } from 'node:crypto';
 import { type Request, type Response } from 'express';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
@@ -24,11 +24,47 @@ const PORT = 8002;
 // Utility function for timestamps
 const timestamp = () => new Date().toISOString();
 
-// Create axios client for backend API
+/**
+ * Sanitize untrusted catalog free-text (product name/description) before it is
+ * returned as tool output and enters the LLM context. Caps length, neutralizes
+ * prompt-injection / role markers, and wraps the value in nonce-tagged
+ * «untrusted» boundaries the model can distinguish from instructions.
+ */
+const MAX_UNTRUSTED_LEN = 2000;
+function sanitizeUntrustedText(value: unknown, nonce: string): string {
+  let text = typeof value === 'string' ? value : String(value ?? '');
+
+  // Bound the injection surface.
+  if (text.length > MAX_UNTRUSTED_LEN) {
+    text = text.slice(0, MAX_UNTRUSTED_LEN) + '…[truncated]';
+  }
+
+  text = text
+    // Strip our own boundary markers so they cannot be forged in the data.
+    .replace(/«\/?untrusted[^»]*»/gi, '')
+    // Neutralize angle-bracket / backtick delimiters used to fake structure.
+    .replace(/[<>`]/g, ' ')
+    // Defang chat role / system markers (e.g. "system:", "assistant:", "<|im_start|>").
+    .replace(/\|?\b(system|assistant|user|developer|tool)\b\s*:/gi, '$1​:')
+    .replace(/<\|[^|]*\|>/g, ' ')
+    // Defang the most common injection imperative without dropping legitimate
+    // product copy: insert a zero-width break so it is no longer a directive.
+    .replace(
+      /\b(ignore|disregard|override|forget)\b(\s+(all|any|the|your|previous|prior|above)\b)/gi,
+      '$1​$2'
+    );
+
+  return `«untrusted:${nonce}»${text}«/untrusted:${nonce}»`;
+}
+
+// Axios client for the backend API; sends the shared API key (X-Api-Key).
 const apiClient: AxiosInstance = axios.create({
   baseURL: `${API_BASE_URL}/api`,
   headers: {
     'Content-Type': 'application/json',
+    ...(process.env.MERCHANT_API_KEY
+      ? { 'X-Api-Key': process.env.MERCHANT_API_KEY }
+      : {}),
   },
 });
 
@@ -116,12 +152,15 @@ mcpServer.registerTool(
 
       const response = await apiClient.get('/products/', { params });
 
+      // Untrusted free-text catalog fields are sanitized + delimited before
+      // entering the LLM context (see sanitizeUntrustedText).
+      const nonce = randomUUID();
       const products = response.data.products.map((p: any) => ({
         id: p.id,
-        name: p.name,
-        description: p.description,
+        name: sanitizeUntrustedText(p.name, nonce),
+        description: sanitizeUntrustedText(p.description, nonce),
         price: p.price,
-        category: p.category,
+        category: sanitizeUntrustedText(p.category, nonce),
         stock_quantity: p.stock_quantity,
         image_url: p.image_url,
       }));
@@ -224,9 +263,11 @@ mcpServer.registerTool(
       const response = await apiClient.get(`/cart/${session_id}`);
 
       const cart = response.data;
+      // Untrusted product name is sanitized + delimited before reaching the LLM.
+      const nonce = randomUUID();
       const items = cart.items.map((item: any) => ({
         product_id: item.product.id,
-        product_name: item.product.name,
+        product_name: sanitizeUntrustedText(item.product.name, nonce),
         quantity: item.quantity,
         price: item.product.price,
         total: item.product.price * item.quantity,
@@ -293,9 +334,11 @@ mcpServer.registerTool(
       });
 
       const cart = response.data;
+      // Untrusted product name is sanitized + delimited before reaching the LLM.
+      const nonce = randomUUID();
       const items = cart.items.map((item: any) => ({
         product_id: item.product.id,
-        product_name: item.product.name,
+        product_name: sanitizeUntrustedText(item.product.name, nonce),
         quantity: item.quantity,
         price: item.product.price,
         total: item.product.price * item.quantity,
@@ -436,6 +479,25 @@ mcpServer.registerTool(
       // Call backend checkout API
       const response = await apiClient.post(`/cart/${session_id}/checkout`, checkoutData);
 
+      // Sanitize untrusted free-text in the checkout result before it re-enters
+      // the LLM context.
+      const nonce = randomUUID();
+      const sanitizedItems = Array.isArray(response.data.order.items)
+        ? response.data.order.items.map((item: any) => ({
+            ...item,
+            product_name: sanitizeUntrustedText(item.product_name, nonce),
+            ...(item.product
+              ? {
+                  product: {
+                    ...item.product,
+                    name: sanitizeUntrustedText(item.product.name, nonce),
+                    description: sanitizeUntrustedText(item.product.description, nonce),
+                  },
+                }
+              : {}),
+          }))
+        : response.data.order.items;
+
       const result = {
         content: [
           {
@@ -445,14 +507,14 @@ mcpServer.registerTool(
                 message: response.data.message,
                 order: {
                   order_number: response.data.order.order_number,
-                  customer_name: response.data.order.customer_name,
-                  customer_email: response.data.order.customer_email,
+                  customer_name: sanitizeUntrustedText(response.data.order.customer_name, nonce),
+                  customer_email: sanitizeUntrustedText(response.data.order.customer_email, nonce),
                   total_amount: response.data.order.total_amount,
                   subtotal: response.data.order.subtotal,
                   tax_amount: response.data.order.tax_amount,
                   shipping_cost: response.data.order.shipping_cost,
                   status: response.data.order.status,
-                  items: response.data.order.items,
+                  items: sanitizedItems,
                 },
                 payment: response.data.payment,
                 fulfillment: response.data.fulfillment,
@@ -487,6 +549,27 @@ async function main() {
     res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'");
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
+    next();
+  });
+
+  // Require the shared API key on every MCP request (deny-by-default), so only
+  // the agent backend can invoke tools.
+  app.use((req: Request, res: Response, next: Function) => {
+    const expected = process.env.MCP_API_KEY;
+    if (!expected) {
+      res.status(500).json({ error: 'Server misconfiguration: MCP_API_KEY is not set' });
+      return;
+    }
+    const provided = req.headers['x-api-key'];
+    // Compare byte lengths first; timingSafeEqual throws on a length mismatch.
+    const providedBuf = Buffer.from(typeof provided === 'string' ? provided : '', 'utf8');
+    const expectedBuf = Buffer.from(expected, 'utf8');
+    const ok = providedBuf.length === expectedBuf.length &&
+      timingSafeEqual(providedBuf, expectedBuf);
+    if (!ok) {
+      res.status(401).json({ error: 'Invalid or missing API key' });
+      return;
+    }
     next();
   });
 

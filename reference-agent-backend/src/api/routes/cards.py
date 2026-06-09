@@ -45,9 +45,11 @@ async def add_card(
         card_request_data = json.loads(plaintext)
         add_card_request_obj = AddCardRequest(**card_request_data)
     except Exception as e:
+        # Log the type only; don't leak decrypt/parse error details to the client.
+        logging.warning("Failed to decrypt payment instrument: %s", type(e).__name__)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Failed to decrypt payment instrument: {str(e)}"
+            detail="Failed to decrypt payment instrument."
         )
     return await card_service.add_card(add_card_request_obj)
 

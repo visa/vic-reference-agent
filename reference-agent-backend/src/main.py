@@ -10,9 +10,10 @@ from src.config import settings
 import logging
 from fastapi.responses import JSONResponse
 import json
-from fastapi import FastAPI, Request, Response, status
+from fastapi import Depends, FastAPI, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from src.api.routes import cards, chat, commerce, passkey, tokens
+from src.auth import require_api_key
 from src.services.agent import lifespan
 
 app = FastAPI(lifespan=lifespan)
@@ -77,10 +78,11 @@ app.add_middleware(
     allow_headers=["*"],  # Allow all headers
 )
 
-# Include routers
-app.include_router(cards.router, prefix="/cards", tags=["cards"])
-app.include_router(commerce.router, prefix="/intents", tags=["intents"])
-app.include_router(passkey.router, prefix="/passkey", tags=["passkey"])
-app.include_router(tokens.router, prefix="/tokens", tags=["tokens"])
-app.include_router(chat.router, prefix="/chat", tags=["chats"])
+# Include routers. All routes require a valid X-Api-Key (deny-by-default).
+_auth = [Depends(require_api_key)]
+app.include_router(cards.router, prefix="/cards", tags=["cards"], dependencies=_auth)
+app.include_router(commerce.router, prefix="/intents", tags=["intents"], dependencies=_auth)
+app.include_router(passkey.router, prefix="/passkey", tags=["passkey"], dependencies=_auth)
+app.include_router(tokens.router, prefix="/tokens", tags=["tokens"], dependencies=_auth)
+app.include_router(chat.router, prefix="/chat", tags=["chats"], dependencies=_auth)
 

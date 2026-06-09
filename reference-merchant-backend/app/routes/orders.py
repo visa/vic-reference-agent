@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 from app.database.database import get_db
+from app.auth import require_api_key
 from app.models.models import (
     Order as OrderModel,
     OrderItem as OrderItemModel
@@ -19,7 +20,7 @@ from app.schemas import Order, OrderList, Message
 import uuid
 from datetime import datetime
 
-router = APIRouter(prefix="/orders", tags=["orders"])
+router = APIRouter(prefix="/orders", tags=["orders"], dependencies=[Depends(require_api_key)])
 
 @router.get("/", response_model=OrderList)
 async def get_orders(
@@ -29,7 +30,14 @@ async def get_orders(
     offset: int = 0,
     db: AsyncSession = Depends(get_db)
 ):
-    """Get orders with optional filtering"""
+    """Get orders for a specific customer (filtered by email)."""
+    # Require a customer scope so this can't be used to enumerate all orders.
+    if not customer_email:
+        raise HTTPException(
+            status_code=400,
+            detail="customer_email is required."
+        )
+
     stmt = select(OrderModel).options(
         selectinload(OrderModel.items).selectinload(OrderItemModel.product)
     )

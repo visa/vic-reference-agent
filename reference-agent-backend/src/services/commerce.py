@@ -55,7 +55,7 @@ class CommerceService:
             await self.card_repo.commit()
         return enroll_response
     
-    async def handle_agentic_checkout(self, agentic_checkout_request: AgenticCheckoutRequest) -> AgenticCheckoutResponse:
+    async def handle_agentic_checkout(self, agentic_checkout_request: AgenticCheckoutRequest, session_id: str) -> AgenticCheckoutResponse:
         # Validate card
         card = await self.card_repo.get_by_token_id(agentic_checkout_request.provisioned_token_id)
         if not card:
@@ -145,8 +145,8 @@ class CommerceService:
         )
         await self.transaction_repo.commit()
 
-        # Complete checkout via ChatService
-        checkout_response = await self.chat_service.complete_checkout(credentials)
+        # Complete checkout via ChatService (scoped to the caller's session)
+        checkout_response = await self.chat_service.complete_checkout(credentials, session_id)
 
         # Confirm the transaction in VIC
         self.vdp_client.confirm_transaction(
