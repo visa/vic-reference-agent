@@ -505,7 +505,7 @@ async def checkout_cart(
     return {
         "message": "Order created and payment processed successfully",
         "order": {
-            "id": order.id,
+            "id": order.public_id,
             "order_number": order.order_number,
             "customer_name": order.customer_name,
             "customer_email": order.customer_email,

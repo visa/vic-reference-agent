@@ -52,7 +52,9 @@ const OrdersPage = () => {
     }
 
     try {
-      await ordersAPI.cancelOrder(orderId);
+      // searchEmail is the owner scope these orders were loaded under; the
+      // backend requires it to authorize the cancellation of this order.
+      await ordersAPI.cancelOrder(orderId, searchEmail);
       loadOrders(searchEmail); // Reload orders
     } catch (err) {
       alert('Failed to cancel order. Please try again.');

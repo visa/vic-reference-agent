@@ -1,0 +1,33 @@
+# © 2026 Visa.
+#
+# nginx site config for the reference merchant storefront.
+#
+# This file is an envsubst template processed at container start by the
+# official nginx entrypoint (/docker-entrypoint.d/20-envsubst-on-templates.sh).
+# Only ${MERCHANT_API_KEY} is substituted (NGINX_ENVSUBST_FILTER is set in the
+# Dockerfile); nginx runtime variables like $uri / $host are preserved.
+#
+# The merchant API key is injected here, server-side, on requests proxied to
+# the backend. It is held only by this proxy and is never delivered to the
+# browser, so it cannot be read out of the static JS bundle.
+
+server {
+    listen 3001;
+
+    # Serve the static single-page app build.
+    location / {
+        root /usr/share/nginx/html;
+        index index.html index.htm;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Reverse-proxy API calls to the merchant backend, adding the shared secret
+    # server-side. The browser calls same-origin /api and never sees the key.
+    location /api/ {
+        proxy_pass http://reference-merchant-backend:8001/api/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Api-Key "${MERCHANT_API_KEY}";
+    }
+}

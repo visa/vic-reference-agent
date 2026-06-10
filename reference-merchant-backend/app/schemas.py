@@ -6,7 +6,8 @@
 #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import AliasChoices
 from typing import List, Optional
 from datetime import datetime
 
@@ -76,16 +77,18 @@ class OrderBase(BaseModel):
     customer_name: str
 
 class Order(OrderBase):
-    id: int
+    # `id` is sourced from the ORM `public_id` (UUID) so the API never exposes
+    # the sequential integer primary key. Clients use this opaque value as the
+    # order handle in all by-id routes.
+    id: str = Field(validation_alias=AliasChoices("public_id", "id"))
     order_number: str
     total_amount: float
     status: str
     items: List[OrderItem] = []
     created_at: datetime
     updated_at: datetime
-    
-    class Config:
-        from_attributes = True
+
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 # Response schemas
 class ProductList(BaseModel):

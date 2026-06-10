@@ -9,17 +9,16 @@
 
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8001/api';
+// Requests go to a same-origin path. A server-side reverse proxy (nginx in
+// production, the Vite dev server in development) forwards `/api` to the
+// merchant backend and injects the X-Api-Key header. The shared secret is held
+// only by that proxy and is never shipped in the browser bundle.
+const API_BASE_URL = '/api';
 
-// The merchant backend requires an API key (X-Api-Key), baked in at build time
-// via VITE_MERCHANT_API_KEY. A key in a browser bundle isn't a strong secret.
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
-    ...(import.meta.env.VITE_MERCHANT_API_KEY
-      ? { 'X-Api-Key': import.meta.env.VITE_MERCHANT_API_KEY }
-      : {}),
   },
 });
 
@@ -71,14 +70,18 @@ export const ordersAPI = {
     return api.get(`/orders?${searchParams.toString()}`);
   },
   
-  getOrder: (id) => api.get(`/orders/${id}`),
-  
+  // Owner-scoped: the backend enforces object-level authorization, so the
+  // owning customer email must accompany by-id reads/mutations.
+  getOrder: (id, customerEmail) =>
+    api.get(`/orders/${id}?customer_email=${encodeURIComponent(customerEmail)}`),
+
   getOrderByNumber: (orderNumber) => api.get(`/orders/number/${orderNumber}`),
-  
-  updateOrderStatus: (id, status) => 
-    api.put(`/orders/${id}/status?status=${status}`),
-  
-  cancelOrder: (id) => api.delete(`/orders/${id}`),
+
+  updateOrderStatus: (id, status, customerEmail) =>
+    api.put(`/orders/${id}/status?status=${encodeURIComponent(status)}&customer_email=${encodeURIComponent(customerEmail)}`),
+
+  cancelOrder: (id, customerEmail) =>
+    api.delete(`/orders/${id}?customer_email=${encodeURIComponent(customerEmail)}`),
 };
 
 // Individual exports for convenience
