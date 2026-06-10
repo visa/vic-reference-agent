@@ -108,15 +108,27 @@ async def get_order(
     return await _get_owned_order(db, order_id, customer_email)
 
 @router.get("/number/{order_number}", response_model=Order)
-async def get_order_by_number(order_number: str, db: AsyncSession = Depends(get_db)):
-    """Get a specific order by order number"""
+async def get_order_by_number(
+    order_number: str,
+    customer_email: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """Get a specific order by order number.
+
+    Owner-scoped: the caller must supply the owning ``customer_email`` and it
+    must match the order on record (web-application-dsr 4.6a). This prevents the
+    route from disclosing customer PII (email/name) and the order's public_id
+    for a guessed order number, which would otherwise re-enable the by-id
+    status-mutation chain. A missing order and a not-owned order both return an
+    identical 404 so the route is not an existence oracle.
+    """
     result = await db.execute(
         select(OrderModel)
         .filter(OrderModel.order_number == order_number)
         .options(selectinload(OrderModel.items).selectinload(OrderItemModel.product))
     )
     order = result.scalar_one_or_none()
-    if not order:
+    if not order or not _emails_match(order.customer_email, customer_email):
         raise HTTPException(status_code=404, detail="Order not found")
     return order
 

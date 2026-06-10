@@ -75,7 +75,8 @@ export const ordersAPI = {
   getOrder: (id, customerEmail) =>
     api.get(`/orders/${id}?customer_email=${encodeURIComponent(customerEmail)}`),
 
-  getOrderByNumber: (orderNumber) => api.get(`/orders/number/${orderNumber}`),
+  getOrderByNumber: (orderNumber, customerEmail) =>
+    api.get(`/orders/number/${orderNumber}?customer_email=${encodeURIComponent(customerEmail)}`),
 
   updateOrderStatus: (id, status, customerEmail) =>
     api.put(`/orders/${id}/status?status=${encodeURIComponent(status)}&customer_email=${encodeURIComponent(customerEmail)}`),
