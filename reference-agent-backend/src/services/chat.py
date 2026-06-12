@@ -6,6 +6,7 @@
 #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+import asyncio
 import logging
 from typing import List
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -16,7 +17,8 @@ from src.services.agent import (
     send_message,
     store_credentials,
     clear_credentials,
-    _checkout_lock
+    _checkout_lock,
+    _CHECKOUT_TIMEOUT_SECONDS,
 )
 
 class ChatService:
@@ -50,17 +52,30 @@ class ChatService:
         # Serialize the store -> ainvoke -> clear sequence: only one checkout may
         # hold the shared credential slot at a time, so two concurrent checkouts
         # cannot interleave and leak one caller's card data into the other's MCP
-        # elicitation (cross-user PAN/CVV exposure).
-        async with _checkout_lock:
-            try:
-                store_credentials(credentials)
-                response_json = await send_message(SystemMessage(content="COMPLETE CHECKOUT"), session_id)
-                checkout_response = AgenticCheckoutResponse(**response_json)
-                return checkout_response
-            except Exception as e:
-                # Log only the exception type; a traceback can embed response bodies
-                # or credentials.
-                logging.error("Error completing checkout: %s", type(e).__name__)
-                raise RuntimeError("An error occurred while completing the checkout. Please try again later.")
-            finally:
-                clear_credentials()
+        # elicitation (cross-user PAN/CVV exposure). A bounded acquire timeout
+        # stops one slow/hung checkout from stalling every other user's checkout.
+        try:
+            await asyncio.wait_for(_checkout_lock.acquire(), timeout=_CHECKOUT_TIMEOUT_SECONDS)
+        except asyncio.TimeoutError:
+            logging.error("Error completing checkout: %s", "LockAcquireTimeout")
+            raise RuntimeError("An error occurred while completing the checkout. Please try again later.")
+        token = None
+        try:
+            token = store_credentials(credentials)
+            # Cap the LLM/MCP round-trip too, so a hung upstream can't pin the lock.
+            response_json = await asyncio.wait_for(
+                send_message(SystemMessage(content="COMPLETE CHECKOUT"), session_id),
+                timeout=_CHECKOUT_TIMEOUT_SECONDS,
+            )
+            checkout_response = AgenticCheckoutResponse(**response_json)
+            return checkout_response
+        except Exception as e:
+            # Log only the exception type; a traceback can embed response bodies
+            # or credentials.
+            logging.error("Error completing checkout: %s", type(e).__name__)
+            raise RuntimeError("An error occurred while completing the checkout. Please try again later.")
+        finally:
+            # Disarm the slot (token-scoped) before releasing the lock so the slot
+            # is never readable by another path while unowned.
+            clear_credentials(token)
+            _checkout_lock.release()
