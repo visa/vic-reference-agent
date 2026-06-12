@@ -72,6 +72,14 @@ _current_credentials: Credentials | None = None
 _credentials_token: str | None = None
 _checkout_in_progress: bool = False
 
+# One-shot release latch for the credential slot. Armed (set to the same value as
+# _credentials_token) when store_credentials mints a token, and CONSUMED (reset to
+# None) by the first on_elicitation read. This bounds card-data release to a single
+# read by the one armed checkout: a concurrent injection-driven checkout_cart that
+# tries to elicit a second time finds the token already consumed and gets ErrorData
+# (10724 live-race).
+_pending_elicit_token: str | None = None
+
 # Serializes the store_credentials -> ainvoke -> clear_credentials sequence so
 # two concurrent checkouts on the same event loop cannot race on the shared
 # _current_credentials slot (cross-user PAN/CVV exposure).
@@ -106,34 +114,49 @@ def reset_thread(session_id: str) -> None:
     _session_threads[session_id] = str(uuid4())
     if old_thread is not None:
         _drop_checkpoint(old_thread)
-    clear_credentials()
+    # TOCTOU guard (10723): only disarm the credential slot when no checkout owns
+    # it. A concurrent /chat/reset must NOT clear an in-flight checkout's armed
+    # slot, or it could disarm the one legitimate checkout window mid-flight.
+    if not _checkout_in_progress:
+        clear_credentials()
 
 def store_credentials(credentials: Credentials) -> str:
     """Arm the credential slot for the current checkout and mark a checkout as
     in progress. Returns a correlation token the caller passes to
     clear_credentials. Must be called while holding _checkout_lock."""
     global _current_credentials, _credentials_token, _checkout_in_progress
+    global _pending_elicit_token
     _current_credentials = credentials
     _credentials_token = str(uuid4())
     _checkout_in_progress = True
+    # Arm the one-shot release latch with this checkout's token; on_elicitation
+    # will consume it on the single legitimate read.
+    _pending_elicit_token = _credentials_token
     return _credentials_token
 
 def clear_credentials(token: str | None = None) -> None:
     """Disarm the credential slot. The token guards against a stale/foreign
     caller clearing an unrelated checkout's slot; clearing always fails closed."""
     global _current_credentials, _credentials_token, _checkout_in_progress
+    global _pending_elicit_token
     if token is not None and token != _credentials_token:
         return
     _current_credentials = None
     _credentials_token = None
     _checkout_in_progress = False
+    _pending_elicit_token = None
 
 async def on_elicitation(context: RequestContext, params: ElicitRequestParams) -> ElicitResult | ErrorData:
     # Fail closed: release card data ONLY while an owned checkout is actively in
-    # progress. _checkout_in_progress is True solely inside complete_checkout's
-    # locked store -> ainvoke window, so the lock-free /chat path and any
-    # injection-triggered checkout_cart outside a real checkout get nothing.
-    if not _checkout_in_progress:
+    # progress AND the one-shot release latch is still armed. _checkout_in_progress
+    # is True solely inside complete_checkout's locked store -> ainvoke window, so
+    # the lock-free /chat path and any injection-triggered checkout_cart outside a
+    # real checkout get nothing. The _pending_elicit_token latch additionally bounds
+    # release to a SINGLE read by the one armed checkout: a second elicitation
+    # (e.g. an injection-driven checkout_cart racing inside the same window) finds
+    # the token already consumed and gets ErrorData (10724 live-race).
+    global _pending_elicit_token
+    if not _checkout_in_progress or _pending_elicit_token is None:
         return ErrorData(
             code=INTERNAL_ERROR,
             message="No checkout in progress; card data unavailable."
@@ -144,6 +167,8 @@ async def on_elicitation(context: RequestContext, params: ElicitRequestParams) -
             code=INTERNAL_ERROR,
             message="No credentials available for checkout."
         )
+    # Consume the latch BEFORE returning so card data is released at most once.
+    _pending_elicit_token = None
     return ElicitResult(
         action="accept",
         content={

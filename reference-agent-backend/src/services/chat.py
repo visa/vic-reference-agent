@@ -31,7 +31,13 @@ class ChatService:
             User Message: {message}
             Selected Products: {products}
             """
-            response_json = await send_message(HumanMessage(content=formatted_message), session_id)
+            # Serialize the lock-free /chat path against checkouts (10723/10724):
+            # hold _checkout_lock across send_message so an injection-triggered
+            # checkout_cart on this path cannot run concurrently with a real
+            # checkout that holds armed credentials, eliminating the window where
+            # both drive the agent (and the elicitation slot) at once.
+            async with _checkout_lock:
+                response_json = await send_message(HumanMessage(content=formatted_message), session_id)
             order_summary = response_json.get("order_summary")
             if order_summary:
                 active_cards = await self.card_repo.get_all_active()
