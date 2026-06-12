@@ -80,8 +80,8 @@ async def get_commerce_service(vdp_client: VDPClientDep, intent_repo: IntentRepo
 
 CommerceServiceDep = Annotated[CommerceService, Depends(get_commerce_service)]
 
-async def get_passkey_service(vdp_client: VDPClientDep) -> PasskeyService:
+async def get_passkey_service(vdp_client: VDPClientDep, card_repo: CardRepositoryDep) -> PasskeyService:
     """Dependency to get a PasskeyService instance."""
-    return PasskeyService(vdp_client)
+    return PasskeyService(vdp_client, card_repo)
 
 PasskeyServiceDep = Annotated[PasskeyService, Depends(get_passkey_service)]
