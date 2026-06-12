@@ -237,7 +237,9 @@ async def lifespan(app: FastAPI):
                 model_provider=settings.llm_provider,
                 api_key=settings.llm_api_key,
                 base_url=settings.llm_base_url,
-                http_async_client=httpx.AsyncClient(verify=settings.llm_tls_verify)
+                # Bound the upstream LLM call so a hung connection cannot hold
+                # _checkout_lock past _CHECKOUT_TIMEOUT_SECONDS (availability DoS).
+                http_async_client=httpx.AsyncClient(verify=settings.llm_tls_verify, timeout=_CHECKOUT_TIMEOUT_SECONDS)
             )
             global _checkpointer
             _checkpointer = InMemorySaver()

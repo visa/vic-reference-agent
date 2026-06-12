@@ -31,13 +31,28 @@ class ChatService:
             User Message: {message}
             Selected Products: {products}
             """
-            # Serialize the lock-free /chat path against checkouts (10723/10724):
-            # hold _checkout_lock across send_message so an injection-triggered
+            # Serialize the /chat path against checkouts (10723/10724): hold
+            # _checkout_lock across send_message so an injection-triggered
             # checkout_cart on this path cannot run concurrently with a real
             # checkout that holds armed credentials, eliminating the window where
             # both drive the agent (and the elicitation slot) at once.
-            async with _checkout_lock:
-                response_json = await send_message(HumanMessage(content=formatted_message), session_id)
+            #
+            # Bound both the lock acquire AND the awaited LLM/MCP round-trip
+            # (matching complete_checkout): an unbounded "async with" here would
+            # let a hung /chat turn pin the shared lock process-wide and stall
+            # every other user's checkout (availability DoS).
+            try:
+                await asyncio.wait_for(_checkout_lock.acquire(), timeout=_CHECKOUT_TIMEOUT_SECONDS)
+            except asyncio.TimeoutError:
+                logging.error("Error processing message: %s", "LockAcquireTimeout")
+                return ChatResponse(response_message="An error occurred while processing your message. Please try again later.")
+            try:
+                response_json = await asyncio.wait_for(
+                    send_message(HumanMessage(content=formatted_message), session_id),
+                    timeout=_CHECKOUT_TIMEOUT_SECONDS,
+                )
+            finally:
+                _checkout_lock.release()
             order_summary = response_json.get("order_summary")
             if order_summary:
                 active_cards = await self.card_repo.get_all_active()
