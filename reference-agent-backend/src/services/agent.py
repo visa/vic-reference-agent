@@ -6,6 +6,8 @@
 #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+import asyncio
+from collections import OrderedDict
 from contextlib import asynccontextmanager
 from uuid import uuid4
 from fastapi import FastAPI
@@ -31,22 +33,40 @@ agent = None
 # Per-conversation thread ids, keyed by the client-supplied session id. Each
 # session gets its own LangGraph checkpoint thread, so concurrent users cannot
 # read or hijack each other's conversation history (was a shared module global).
-_session_threads: dict[str, str] = {}
+# Bounded with LRU eviction so an attacker streaming many distinct X-Session-Id
+# values cannot grow this map (and its checkpoints) without limit (memory DoS).
+_MAX_SESSIONS = 1000
+_session_threads: "OrderedDict[str, str]" = OrderedDict()
 
-# Checkout credentials, live only during a single server-initiated checkout (set
-# in store_credentials, cleared in complete_checkout's finally). on_elicitation
-# returns an error while this is None, so an injection-triggered checkout_cart
-# during a search can't exfiltrate card data. Module-level rather than a
-# ContextVar: the MCP elicitation callback runs in lifespan()'s receive-loop task
-# and can't see ContextVars set by the request task.
+# Checkout credentials, live only during a single server-initiated checkout.
+# Access is serialized by _checkout_lock (see complete_checkout): only one
+# checkout can hold credentials at a time, so concurrent checkouts cannot
+# interleave and leak one caller's card data into another's elicitation. The
+# on_elicitation guard returns an error while this is None, so an
+# injection-triggered checkout_cart during a search can't exfiltrate card data.
+# Module-level rather than a ContextVar: the MCP elicitation callback runs in
+# lifespan()'s receive-loop task and can't see ContextVars set by the request task.
 _current_credentials: Credentials | None = None
 
+# Serializes the store_credentials -> ainvoke -> clear_credentials sequence so
+# two concurrent checkouts on the same event loop cannot race on the shared
+# _current_credentials slot (cross-user PAN/CVV exposure).
+_checkout_lock = asyncio.Lock()
+
 def _thread_id_for(session_id: str) -> str:
-    """Return a stable thread id for a session, creating one on first use."""
+    """Return a stable thread id for a session, creating one on first use.
+
+    Uses LRU semantics with a hard cap so the map cannot grow unbounded.
+    """
     thread_id = _session_threads.get(session_id)
     if thread_id is None:
         thread_id = str(uuid4())
         _session_threads[session_id] = thread_id
+        # Evict least-recently-used sessions beyond the cap.
+        while len(_session_threads) > _MAX_SESSIONS:
+            _session_threads.popitem(last=False)
+    else:
+        _session_threads.move_to_end(session_id)
     return thread_id
 
 def reset_thread(session_id: str) -> None:

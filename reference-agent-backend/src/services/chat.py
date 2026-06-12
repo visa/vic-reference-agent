@@ -15,7 +15,8 @@ from src.schemas.commerce import AgenticCheckoutResponse, Credentials
 from src.services.agent import (
     send_message,
     store_credentials,
-    clear_credentials
+    clear_credentials,
+    _checkout_lock
 )
 
 class ChatService:
@@ -46,15 +47,20 @@ class ChatService:
             return ChatResponse(response_message="An error occurred while processing your message. Please try again later.")
 
     async def complete_checkout(self, credentials: Credentials, session_id: str) -> AgenticCheckoutResponse:
-        try:
-            store_credentials(credentials)
-            response_json = await send_message(SystemMessage(content="COMPLETE CHECKOUT"), session_id)
-            checkout_response = AgenticCheckoutResponse(**response_json)
-            return checkout_response
-        except Exception as e:
-            # Log only the exception type; a traceback can embed response bodies
-            # or credentials.
-            logging.error("Error completing checkout: %s", type(e).__name__)
-            raise RuntimeError("An error occurred while completing the checkout. Please try again later.")
-        finally:
-            clear_credentials()
+        # Serialize the store -> ainvoke -> clear sequence: only one checkout may
+        # hold the shared credential slot at a time, so two concurrent checkouts
+        # cannot interleave and leak one caller's card data into the other's MCP
+        # elicitation (cross-user PAN/CVV exposure).
+        async with _checkout_lock:
+            try:
+                store_credentials(credentials)
+                response_json = await send_message(SystemMessage(content="COMPLETE CHECKOUT"), session_id)
+                checkout_response = AgenticCheckoutResponse(**response_json)
+                return checkout_response
+            except Exception as e:
+                # Log only the exception type; a traceback can embed response bodies
+                # or credentials.
+                logging.error("Error completing checkout: %s", type(e).__name__)
+                raise RuntimeError("An error occurred while completing the checkout. Please try again later.")
+            finally:
+                clear_credentials()
