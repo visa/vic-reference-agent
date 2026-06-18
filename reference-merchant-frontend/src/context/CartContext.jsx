@@ -77,6 +77,19 @@ export function CartProvider({ children }) {
       const response = await cartAPI.getCart(sessionId);
       dispatch({ type: 'SET_CART', payload: response.data });
     } catch (error) {
+      // A stale session (e.g. the backend DB was reset) 404s; start a fresh cart.
+      if (error.response?.status === 404) {
+        try {
+          const response = await cartAPI.createCart();
+          const newSessionId = response.data.session_id;
+          localStorage.setItem('cartSessionId', newSessionId);
+          dispatch({ type: 'SET_SESSION_ID', payload: newSessionId });
+          dispatch({ type: 'SET_CART', payload: response.data });
+          return;
+        } catch (createError) {
+          console.error('Failed to recreate cart:', createError);
+        }
+      }
       console.error('Failed to load cart:', error);
       dispatch({ type: 'SET_ERROR', payload: 'Failed to load cart' });
     }

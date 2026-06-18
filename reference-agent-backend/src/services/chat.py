@@ -18,7 +18,7 @@ from src.services.agent import (
     store_credentials,
     clear_credentials,
     _checkout_lock,
-    _CHECKOUT_TIMEOUT_SECONDS,
+    _LOCK_ACQUIRE_TIMEOUT_SECONDS,
 )
 
 class ChatService:
@@ -31,26 +31,17 @@ class ChatService:
             User Message: {message}
             Selected Products: {products}
             """
-            # Serialize the /chat path against checkouts (10723/10724): hold
-            # _checkout_lock across send_message so an injection-triggered
-            # checkout_cart on this path cannot run concurrently with a real
-            # checkout that holds armed credentials, eliminating the window where
-            # both drive the agent (and the elicitation slot) at once.
-            #
-            # Bound both the lock acquire AND the awaited LLM/MCP round-trip
-            # (matching complete_checkout): an unbounded "async with" here would
-            # let a hung /chat turn pin the shared lock process-wide and stall
-            # every other user's checkout (availability DoS).
+            # Hold _checkout_lock across send_message so an injection-triggered
+            # checkout_cart on /chat can't run concurrently with a real checkout.
+            # Only the acquire is bounded (a queued caller fails fast); the holder
+            # runs untimed so a multi-step turn isn't cut off.
             try:
-                await asyncio.wait_for(_checkout_lock.acquire(), timeout=_CHECKOUT_TIMEOUT_SECONDS)
+                await asyncio.wait_for(_checkout_lock.acquire(), timeout=_LOCK_ACQUIRE_TIMEOUT_SECONDS)
             except asyncio.TimeoutError:
                 logging.error("Error processing message: %s", "LockAcquireTimeout")
                 return ChatResponse(response_message="An error occurred while processing your message. Please try again later.")
             try:
-                response_json = await asyncio.wait_for(
-                    send_message(HumanMessage(content=formatted_message), session_id),
-                    timeout=_CHECKOUT_TIMEOUT_SECONDS,
-                )
+                response_json = await send_message(HumanMessage(content=formatted_message), session_id)
             finally:
                 _checkout_lock.release()
             order_summary = response_json.get("order_summary")
@@ -70,24 +61,17 @@ class ChatService:
             return ChatResponse(response_message="An error occurred while processing your message. Please try again later.")
 
     async def complete_checkout(self, credentials: Credentials, session_id: str) -> AgenticCheckoutResponse:
-        # Serialize the store -> ainvoke -> clear sequence: only one checkout may
-        # hold the shared credential slot at a time, so two concurrent checkouts
-        # cannot interleave and leak one caller's card data into the other's MCP
-        # elicitation (cross-user PAN/CVV exposure). A bounded acquire timeout
-        # stops one slow/hung checkout from stalling every other user's checkout.
+        # Serialize store -> ainvoke -> clear so concurrent checkouts can't leak
+        # one caller's card data into another's elicitation; bounded acquire.
         try:
-            await asyncio.wait_for(_checkout_lock.acquire(), timeout=_CHECKOUT_TIMEOUT_SECONDS)
+            await asyncio.wait_for(_checkout_lock.acquire(), timeout=_LOCK_ACQUIRE_TIMEOUT_SECONDS)
         except asyncio.TimeoutError:
             logging.error("Error completing checkout: %s", "LockAcquireTimeout")
             raise RuntimeError("An error occurred while completing the checkout. Please try again later.")
         token = None
         try:
             token = store_credentials(credentials)
-            # Cap the LLM/MCP round-trip too, so a hung upstream can't pin the lock.
-            response_json = await asyncio.wait_for(
-                send_message(SystemMessage(content="COMPLETE CHECKOUT"), session_id),
-                timeout=_CHECKOUT_TIMEOUT_SECONDS,
-            )
+            response_json = await send_message(SystemMessage(content="COMPLETE CHECKOUT"), session_id)
             checkout_response = AgenticCheckoutResponse(**response_json)
             return checkout_response
         except Exception as e:

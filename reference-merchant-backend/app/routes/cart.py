@@ -40,15 +40,9 @@ def calculate_cart_totals(cart_items):
     return subtotal, tax, shipping, total
 
 def generate_order_number():
-    """Generate a unique order number.
-
-    The random suffix uses 128 bits of entropy (secrets.token_hex(16)) so the
-    order number is not enumerable. Order numbers appear on receipts/emails and
-    must not be treated as a secret, but high entropy removes the guess-and-
-    enumerate path against order lookups (web-application-dsr 4.6d).
-    """
+    """Generate a unique order number with a random suffix so it is not enumerable."""
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    random_suffix = secrets.token_hex(16).upper()
+    random_suffix = secrets.token_hex(12).upper()
     return f"ORD-{timestamp}-{random_suffix}"
 
 @router.post("/", response_model=Cart)

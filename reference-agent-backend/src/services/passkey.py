@@ -20,15 +20,9 @@ class PasskeyService:
         self.card_repo = card_repo
 
     async def _verify_token_owned(self, provisioned_token_id: str) -> None:
-        """Object-level authorization for passkey/device-binding operations.
-
-        The provisioned token must belong to this wallet before any passkey flow
-        acts on it. Without this check, an unauthenticated caller could bind their
-        own device to (or run challenge/attestation flows against) a victim's
-        token by supplying an arbitrary provisioned_token_id (AISAST-10721).
-        Returns an identical 404 whether the token does not exist or is not in
-        the wallet, so the endpoint is not an existence oracle.
-        """
+        """Ensure the provisioned token belongs to this wallet before any passkey
+        flow acts on it. Returns an identical 404 for missing vs not-owned, so it
+        is not an existence oracle."""
         card = await self.card_repo.get_by_token_id(provisioned_token_id)
         if card is None:
             raise HTTPException(

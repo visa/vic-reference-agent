@@ -23,9 +23,10 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# No merchant API key is baked into the build. The storefront talks to a
-# same-origin /api path; the nginx reverse proxy (stage 2) injects the secret
-# server-side at runtime, so it never enters the browser bundle.
+# Merchant API key for authenticated calls to the backend. Provided as a build
+# arg and exposed to Vite (must be VITE_-prefixed) at build time.
+ARG VITE_MERCHANT_API_KEY
+ENV VITE_MERCHANT_API_KEY=$VITE_MERCHANT_API_KEY
 
 # Build the React app
 RUN npm run build
@@ -36,15 +37,18 @@ FROM nginx:alpine
 # Copy built files from builder
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Install the site config as an envsubst template. The official nginx entrypoint
-# renders /etc/nginx/templates/*.template into /etc/nginx/conf.d/ at startup.
-# NGINX_ENVSUBST_FILTER restricts substitution to MERCHANT_API_KEY so nginx
-# runtime variables ($uri, $host, ...) are left intact.
-COPY nginx.conf.template /etc/nginx/templates/default.conf.template
-ENV NGINX_ENVSUBST_FILTER=MERCHANT_API_KEY
+# Copy custom nginx configuration
+RUN echo 'server { \
+    listen 3001; \
+    location / { \
+        root /usr/share/nginx/html; \
+        index index.html index.htm; \
+        try_files $uri $uri/ /index.html; \
+    } \
+}' > /etc/nginx/conf.d/default.conf
 
 # Expose the port
 EXPOSE 3001
 
-# Use the image's default entrypoint/CMD so templates are rendered before nginx
-# starts (CMD ["nginx", "-g", "daemon off;"] is the base image default).
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]

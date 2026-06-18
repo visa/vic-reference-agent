@@ -28,18 +28,17 @@ def _emails_match(stored: str | None, supplied: str | None) -> bool:
     """Constant-time, case-insensitive comparison of two email addresses."""
     if not stored or not supplied:
         return False
-    return secrets.compare_digest(stored.strip().lower(), supplied.strip().lower())
+    # Compare as bytes; compare_digest raises on non-ASCII str (a 500, not a 404).
+    return secrets.compare_digest(
+        stored.strip().lower().encode("utf-8"), supplied.strip().lower().encode("utf-8")
+    )
 
 
 async def _get_owned_order(db: AsyncSession, public_id: str, customer_email: str) -> OrderModel:
-    """Fetch an order by its public UUID and enforce object-level authorization.
+    """Fetch an order by its public UUID, requiring the owning customer_email.
 
-    The caller must supply the owning ``customer_email``; possession of the
-    opaque order id alone is not sufficient to read or mutate the record
-    (Broken Object-Level Authorization / IDOR defense, web-application-dsr
-    4.6a). A non-existent order and an order owned by someone else both return
-    an identical 404 so this endpoint cannot be used as an existence oracle to
-    enumerate orders.
+    A non-existent order and a not-owned order both return an identical 404, so
+    the endpoint can't be used to enumerate orders.
     """
     result = await db.execute(
         select(OrderModel)
@@ -100,11 +99,7 @@ async def get_order(
     customer_email: str,
     db: AsyncSession = Depends(get_db)
 ):
-    """Get a specific order by its public (non-enumerable) UUID.
-
-    Requires the owning ``customer_email`` and enforces object-level
-    authorization via :func:`_get_owned_order`.
-    """
+    """Get a specific order by its public UUID (owner-scoped by customer_email)."""
     return await _get_owned_order(db, order_id, customer_email)
 
 @router.get("/number/{order_number}", response_model=Order)
@@ -113,14 +108,10 @@ async def get_order_by_number(
     customer_email: str,
     db: AsyncSession = Depends(get_db)
 ):
-    """Get a specific order by order number.
+    """Get a specific order by order number (owner-scoped by customer_email).
 
-    Owner-scoped: the caller must supply the owning ``customer_email`` and it
-    must match the order on record (web-application-dsr 4.6a). This prevents the
-    route from disclosing customer PII (email/name) and the order's public_id
-    for a guessed order number, which would otherwise re-enable the by-id
-    status-mutation chain. A missing order and a not-owned order both return an
-    identical 404 so the route is not an existence oracle.
+    A missing order and a not-owned order both return an identical 404, so a
+    guessed order number can't disclose customer PII or the order's public_id.
     """
     result = await db.execute(
         select(OrderModel)
@@ -139,12 +130,8 @@ async def update_order_status(
     customer_email: str,
     db: AsyncSession = Depends(get_db)
 ):
-    """Update order status.
-
-    Requires the owning ``customer_email``; the order is resolved by its public
-    UUID and ownership is enforced before any mutation (web-application-dsr
-    4.6a). This closes the unauthenticated/IDOR order-status modification.
-    """
+    """Update order status (owner-scoped by customer_email; ownership enforced
+    before the mutation)."""
     valid_statuses = ["pending", "confirmed", "shipped", "delivered", "cancelled"]
     if status not in valid_statuses:
         raise HTTPException(
@@ -167,11 +154,7 @@ async def cancel_order(
     customer_email: str,
     db: AsyncSession = Depends(get_db)
 ):
-    """Cancel an order (only if status is pending or confirmed).
-
-    Requires the owning ``customer_email`` and enforces object-level
-    authorization before cancelling (web-application-dsr 4.6a).
-    """
+    """Cancel an order (owner-scoped by customer_email; only if pending or confirmed)."""
     order = await _get_owned_order(db, order_id, customer_email)
 
     if order.status not in ["pending", "confirmed"]:

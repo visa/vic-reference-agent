@@ -12,7 +12,7 @@ from uuid import uuid4
 from fastapi import APIRouter, Header, status
 from src.dependencies import ChatServiceDep
 from src.schemas.chat import ChatRequest, ChatResponse
-from src.services.agent import reset_thread, _checkout_lock, _CHECKOUT_TIMEOUT_SECONDS
+from src.services.agent import reset_thread, _checkout_lock, _LOCK_ACQUIRE_TIMEOUT_SECONDS
 
 router = APIRouter()
 
@@ -37,12 +37,10 @@ async def reset_chat(
     chat_service: ChatServiceDep,
     x_session_id: str | None = Header(default=None),
 ) -> None:
-    # Make the reset atomic w.r.t. checkouts (10723): hold _checkout_lock around
-    # reset_thread so a concurrent /chat/reset cannot disarm an in-flight
-    # checkout's armed credential slot mid-flight. Acquire is bounded so a hung
-    # checkout cannot stall reset process-wide.
+    # Hold _checkout_lock around reset so a concurrent /chat/reset can't disarm an
+    # in-flight checkout mid-flight; bounded acquire so a hung checkout can't stall it.
     try:
-        await asyncio.wait_for(_checkout_lock.acquire(), timeout=_CHECKOUT_TIMEOUT_SECONDS)
+        await asyncio.wait_for(_checkout_lock.acquire(), timeout=_LOCK_ACQUIRE_TIMEOUT_SECONDS)
     except asyncio.TimeoutError:
         logging.error("Error resetting chat: %s", "LockAcquireTimeout")
         return

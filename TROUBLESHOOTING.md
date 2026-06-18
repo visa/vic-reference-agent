@@ -11,7 +11,9 @@ Common problems and solutions when running the application with Docker Compose.
 - Verify SSL certificates are generated in reference-agent-frontend
 
 **Database errors:**
-- Delete data directories and restart: `docker-compose down -v && docker-compose up --build`
+- The SQLite databases are bind-mounted to `reference-*-backend/data/`, so `docker-compose down -v` does **not** clear them — delete the files on the host and restart:
+  `docker-compose down && rm -f reference-merchant-backend/data/*.db reference-agent-backend/data/*.db && docker-compose up --build`
+- This is also the fix for `no such column` errors after pulling changes that add a database column: the old `data/` file predates the new schema (tables are created if missing, never altered), so it must be deleted and reseeded.
 
 **Connectivity issues or hanging requests:**
 - Restart the containers: `docker-compose down && docker-compose up`

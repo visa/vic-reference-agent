@@ -26,23 +26,19 @@
 
 ## Environment Configuration
 
-The merchant backend requires an API key (`X-Api-Key`). The key is **never baked into the browser bundle**. Instead the storefront calls a same-origin `/api` path, and a server-side reverse proxy injects the key:
-
-- **Production (Docker):** the nginx reverse proxy in the container adds `X-Api-Key`, read at runtime from the `MERCHANT_API_KEY` environment variable.
-- **Local development:** the Vite dev server proxies `/api` and injects the key from the `MERCHANT_API_KEY` shell environment variable.
-
-The value must match `MERCHANT_API_KEY` on the backend. Under Docker Compose it is supplied from the project-root `.env`.
+The frontend sends an API key (`X-Api-Key`) on every call to the merchant backend. `VITE_MERCHANT_API_KEY` is baked into the bundle at build time and must match `MERCHANT_API_KEY` on the backend. For local runs, copy `.env.sample` to `.env` and set it. Under Docker Compose it is supplied from the project-root `.env`.
 
 ## Quick Start
 
 ### Running with Docker (Recommended)
 
 ```bash
-# Build the image (no secret is baked in at build time)
-docker build -t reference-merchant-frontend .
+# Build the image (the API key is baked in at build time)
+docker build -t reference-merchant-frontend \
+  --build-arg VITE_MERCHANT_API_KEY=your-merchant-api-key .
 
-# Run the container; the key is injected by nginx at runtime
-docker run -p 3001:3001 -e MERCHANT_API_KEY=your-merchant-api-key reference-merchant-frontend
+# Run the container
+docker run -p 3001:3001 reference-merchant-frontend
 ```
 
 ### Running Locally
@@ -50,13 +46,13 @@ docker run -p 3001:3001 -e MERCHANT_API_KEY=your-merchant-api-key reference-merc
 ```bash
 # Set up environment configuration
 cp .env.sample .env
-# Edit .env and set MERCHANT_API_KEY
+# Edit .env and set VITE_MERCHANT_API_KEY
 
 # Install dependencies
 npm install
 
-# Start the development server (reads MERCHANT_API_KEY for the dev proxy)
-MERCHANT_API_KEY=your-merchant-api-key npm start
+# Start the development server
+npm start
 ```
 
 The application will be available at `http://localhost:3001`.

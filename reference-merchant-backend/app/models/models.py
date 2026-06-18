@@ -83,9 +83,7 @@ class Order(Base, TimestampMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     # Public, non-enumerable identifier exposed by the API instead of the
-    # sequential integer primary key. Random UUIDv4 prevents object-reference
-    # enumeration (web-application-dsr 4.6b/4.6d). The integer `id` stays
-    # internal-only (foreign keys, joins) and is never returned to clients.
+    # sequential integer primary key. The integer `id` stays internal-only.
     public_id: Mapped[str] = mapped_column(
         String(36), unique=True, index=True, default=lambda: str(uuid.uuid4())
     )

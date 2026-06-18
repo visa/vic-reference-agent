@@ -13,13 +13,11 @@ import { ordersAPI } from '../services/api';
 
 const OrdersPage = () => {
   const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Orders are scoped to a customer email, so nothing loads on mount; start
+  // unloaded so the search form renders instead of a perpetual spinner.
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchEmail, setSearchEmail] = useState('');
-
-  useEffect(() => {
-    // Orders are scoped to a customer email; don't load all orders on mount.
-  }, []);
 
   const loadOrders = async (customerEmail = '') => {
     // The orders API requires a customer email scope (no enumerate-all).

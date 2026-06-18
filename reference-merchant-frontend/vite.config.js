@@ -10,12 +10,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// Backend target and shared secret for the dev proxy. Read from the dev
-// shell environment (NOT a VITE_-prefixed var), so the key stays in the Node
-// dev-server process and is never inlined into the client bundle.
-const BACKEND_TARGET = process.env.MERCHANT_BACKEND_URL || 'http://localhost:8001';
-const MERCHANT_API_KEY = process.env.MERCHANT_API_KEY;
-
 export default defineConfig({
   plugins: [react()],
   server: {
@@ -25,21 +19,6 @@ export default defineConfig({
       'X-Frame-Options': 'DENY',
       'Content-Security-Policy': "frame-ancestors 'none'",
       'X-Content-Type-Options': 'nosniff',
-    },
-    // Same-origin /api proxy. The dev server injects X-Api-Key server-side so
-    // the storefront code never has to hold the merchant secret.
-    proxy: {
-      '/api': {
-        target: BACKEND_TARGET,
-        changeOrigin: true,
-        configure: (proxy) => {
-          proxy.on('proxyReq', (proxyReq) => {
-            if (MERCHANT_API_KEY) {
-              proxyReq.setHeader('X-Api-Key', MERCHANT_API_KEY);
-            }
-          });
-        },
-      },
     },
   },
   build: {

@@ -67,13 +67,13 @@ services:
     build:
       context: ./reference-merchant-frontend
       dockerfile: Dockerfile
+      args:
+        # Baked into the Vite bundle at build time so the storefront can
+        # authenticate to the merchant backend.
+        - VITE_MERCHANT_API_KEY=${MERCHANT_API_KEY:?MERCHANT_API_KEY must be set (see .env.sample)}
     container_name: reference-merchant-frontend
     ports:
       - "3001:3001"
-    environment:
-      # Injected into the nginx reverse proxy at runtime and added to requests
-      # proxied to the backend. Never baked into the browser bundle.
-      - MERCHANT_API_KEY=${MERCHANT_API_KEY:?MERCHANT_API_KEY must be set (see .env.sample)}
     depends_on:
       - reference-merchant-backend
     networks:

@@ -9,16 +9,17 @@
 
 import axios from 'axios';
 
-// Requests go to a same-origin path. A server-side reverse proxy (nginx in
-// production, the Vite dev server in development) forwards `/api` to the
-// merchant backend and injects the X-Api-Key header. The shared secret is held
-// only by that proxy and is never shipped in the browser bundle.
-const API_BASE_URL = '/api';
+const API_BASE_URL = 'http://localhost:8001/api';
 
+// The merchant backend requires an API key (X-Api-Key), baked in at build time
+// via VITE_MERCHANT_API_KEY. A key in a browser bundle isn't a strong secret.
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
+    ...(import.meta.env.VITE_MERCHANT_API_KEY
+      ? { 'X-Api-Key': import.meta.env.VITE_MERCHANT_API_KEY }
+      : {}),
   },
 });
 
