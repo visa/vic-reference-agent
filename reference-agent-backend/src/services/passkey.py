@@ -11,13 +11,27 @@ from fastapi import HTTPException, status
 import json
 import re
 from src.services.vdp_client import VDPClient
+from src.repositories.card import CardRepository
 from src.schemas.passkey import AttestationOptionsAuthenticateRequest, DeviceBindingRequest, CreateChallengeRequest, SolveChallengeRequest, AttestationOptionsRegisterRequest
 
 class PasskeyService:
-    def __init__(self, vdp_client: VDPClient):
+    def __init__(self, vdp_client: VDPClient, card_repo: CardRepository):
         self.vdp_client = vdp_client
+        self.card_repo = card_repo
+
+    async def _verify_token_owned(self, provisioned_token_id: str) -> None:
+        """Ensure the provisioned token belongs to this wallet before any passkey
+        flow acts on it. Returns an identical 404 for missing vs not-owned, so it
+        is not an existence oracle."""
+        card = await self.card_repo.get_by_token_id(provisioned_token_id)
+        if card is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Token not found."
+            )
 
     async def attestation_options_authenticate(self, request: AttestationOptionsAuthenticateRequest) -> dict:
+        await self._verify_token_owned(request.provisioned_token_id)
         auth_context = self.vdp_client.attestation_options_authenticate(
             id=str(request.client_reference_id),
             provisioned_token_id=request.provisioned_token_id,
@@ -30,6 +44,7 @@ class PasskeyService:
         return auth_context
 
     async def device_binding(self, request: DeviceBindingRequest) -> dict:
+        await self._verify_token_owned(request.provisioned_token_id)
         device_binding_response = self.vdp_client.device_binding(
             id=str(request.client_reference_id),
             provisioned_token_id=request.provisioned_token_id,
@@ -41,6 +56,7 @@ class PasskeyService:
         return device_binding_response
 
     async def create_challenge(self, request: CreateChallengeRequest) -> dict:
+        await self._verify_token_owned(request.provisioned_token_id)
         create_challenge_response = self.vdp_client.create_challenge(
             id=str(request.client_reference_id),
             provisioned_token_id=request.provisioned_token_id,
@@ -49,6 +65,7 @@ class PasskeyService:
         return create_challenge_response
 
     async def solve_challenge(self, request: SolveChallengeRequest) -> dict:
+        await self._verify_token_owned(request.provisioned_token_id)
         solve_challenge_response = self.vdp_client.solve_challenge(
             id=str(request.client_reference_id),
             provisioned_token_id=request.provisioned_token_id,
@@ -57,6 +74,7 @@ class PasskeyService:
         return solve_challenge_response
 
     async def attestation_options_register(self, request: AttestationOptionsRegisterRequest) -> dict:
+        await self._verify_token_owned(request.provisioned_token_id)
         auth_context = self.vdp_client.attestation_options_register(
             id=str(request.client_reference_id),
             provisioned_token_id=request.provisioned_token_id,

@@ -17,10 +17,38 @@ from app.models.models import (
     OrderItem as OrderItemModel
 )
 from app.schemas import Order, OrderList, Message
+import secrets
 import uuid
 from datetime import datetime
 
 router = APIRouter(prefix="/orders", tags=["orders"], dependencies=[Depends(require_api_key)])
+
+
+def _emails_match(stored: str | None, supplied: str | None) -> bool:
+    """Constant-time, case-insensitive comparison of two email addresses."""
+    if not stored or not supplied:
+        return False
+    # Compare as bytes; compare_digest raises on non-ASCII str (a 500, not a 404).
+    return secrets.compare_digest(
+        stored.strip().lower().encode("utf-8"), supplied.strip().lower().encode("utf-8")
+    )
+
+
+async def _get_owned_order(db: AsyncSession, public_id: str, customer_email: str) -> OrderModel:
+    """Fetch an order by its public UUID, requiring the owning customer_email.
+
+    A non-existent order and a not-owned order both return an identical 404, so
+    the endpoint can't be used to enumerate orders.
+    """
+    result = await db.execute(
+        select(OrderModel)
+        .filter(OrderModel.public_id == public_id)
+        .options(selectinload(OrderModel.items).selectinload(OrderItemModel.product))
+    )
+    order = result.scalar_one_or_none()
+    if not order or not _emails_match(order.customer_email, customer_email):
+        raise HTTPException(status_code=404, detail="Order not found")
+    return order
 
 @router.get("/", response_model=OrderList)
 async def get_orders(
@@ -66,38 +94,44 @@ async def get_orders(
     return OrderList(orders=orders, total=total)
 
 @router.get("/{order_id}", response_model=Order)
-async def get_order(order_id: int, db: AsyncSession = Depends(get_db)):
-    """Get a specific order by ID"""
-    result = await db.execute(
-        select(OrderModel)
-        .filter(OrderModel.id == order_id)
-        .options(selectinload(OrderModel.items).selectinload(OrderItemModel.product))
-    )
-    order = result.scalar_one_or_none()
-    if not order:
-        raise HTTPException(status_code=404, detail="Order not found")
-    return order
+async def get_order(
+    order_id: str,
+    customer_email: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """Get a specific order by its public UUID (owner-scoped by customer_email)."""
+    return await _get_owned_order(db, order_id, customer_email)
 
 @router.get("/number/{order_number}", response_model=Order)
-async def get_order_by_number(order_number: str, db: AsyncSession = Depends(get_db)):
-    """Get a specific order by order number"""
+async def get_order_by_number(
+    order_number: str,
+    customer_email: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """Get a specific order by order number (owner-scoped by customer_email).
+
+    A missing order and a not-owned order both return an identical 404, so a
+    guessed order number can't disclose customer PII or the order's public_id.
+    """
     result = await db.execute(
         select(OrderModel)
         .filter(OrderModel.order_number == order_number)
         .options(selectinload(OrderModel.items).selectinload(OrderItemModel.product))
     )
     order = result.scalar_one_or_none()
-    if not order:
+    if not order or not _emails_match(order.customer_email, customer_email):
         raise HTTPException(status_code=404, detail="Order not found")
     return order
 
 @router.put("/{order_id}/status", response_model=Order)
 async def update_order_status(
-    order_id: int,
+    order_id: str,
     status: str,
+    customer_email: str,
     db: AsyncSession = Depends(get_db)
 ):
-    """Update order status"""
+    """Update order status (owner-scoped by customer_email; ownership enforced
+    before the mutation)."""
     valid_statuses = ["pending", "confirmed", "shipped", "delivered", "cancelled"]
     if status not in valid_statuses:
         raise HTTPException(
@@ -105,38 +139,23 @@ async def update_order_status(
             detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}"
         )
 
-    result = await db.execute(
-        select(OrderModel).filter(OrderModel.id == order_id)
-    )
-    order = result.scalar_one_or_none()
-    if not order:
-        raise HTTPException(status_code=404, detail="Order not found")
+    order = await _get_owned_order(db, order_id, customer_email)
 
     order.status = status
     order.updated_at = datetime.utcnow()
-
     await db.commit()
-    await db.refresh(order, attribute_names=['items'])
 
-    # Reload with relationships
-    result = await db.execute(
-        select(OrderModel)
-        .filter(OrderModel.id == order.id)
-        .options(selectinload(OrderModel.items).selectinload(OrderItemModel.product))
-    )
-    order = result.scalar_one()
-
-    return order
+    # Reload with relationships (ownership re-verified on the reload).
+    return await _get_owned_order(db, order_id, customer_email)
 
 @router.delete("/{order_id}", response_model=Message)
-async def cancel_order(order_id: int, db: AsyncSession = Depends(get_db)):
-    """Cancel an order (only if status is pending or confirmed)"""
-    result = await db.execute(
-        select(OrderModel).filter(OrderModel.id == order_id)
-    )
-    order = result.scalar_one_or_none()
-    if not order:
-        raise HTTPException(status_code=404, detail="Order not found")
+async def cancel_order(
+    order_id: str,
+    customer_email: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """Cancel an order (owner-scoped by customer_email; only if pending or confirmed)."""
+    order = await _get_owned_order(db, order_id, customer_email)
 
     if order.status not in ["pending", "confirmed"]:
         raise HTTPException(

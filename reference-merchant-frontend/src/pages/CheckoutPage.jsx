@@ -193,7 +193,10 @@ const CheckoutPage = () => {
       });
     } catch (err) {
       setError('Failed to process your order. Please try again.');
-      console.error('Checkout error:', err);
+      // Do not log the raw error: an AxiosError carries config.data, which is
+      // the serialized checkout request body (raw PAN/CVV/expiry). Log only the
+      // non-sensitive message and HTTP status.
+      console.error('Checkout error:', err?.message, err?.response?.status);
     } finally {
       setLoading(false);
     }

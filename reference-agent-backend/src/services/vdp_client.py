@@ -40,14 +40,30 @@ from src.utils.constants import (
 )
 
 # Substrings of JSON keys whose values are redacted from the request/response
-# logs surfaced to the browser (PAN, CVV, expiry, tokens, encrypted blobs, secrets).
+# logs surfaced to the browser (PAN, CVV, expiry, tokens, encrypted blobs,
+# secrets, and signed/structured fields whose contents carry token/card data).
 _SENSITIVE_KEY_PARTS = (
     "pan", "card_number", "cardnumber", "accountnumber", "cvv", "cvc",
     "securitycode", "security_code", "expiry", "expirationdate", "expiration_date",
     "paymenttoken", "dynamicdatavalue", "encpaymentinstrument", "encdata",
     "enc_payment_instrument", "secret", "password", "sharedsecret", "authorization",
+    "signedpayload", "tokeninfo", "cardmetadata", "content",
 )
 _REDACTED = "[REDACTED]"
+
+_JOSE_CHARS = set(
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+)
+
+def _looks_like_jose(value) -> bool:
+    """True for a compact JWS (3 parts) or JWE (5 parts) token. These decode to
+    token/card claims, so they're redacted even when the key name isn't sensitive."""
+    if not isinstance(value, str):
+        return False
+    parts = value.split(".")
+    if len(parts) not in (3, 5):
+        return False
+    return all(part and all(c in _JOSE_CHARS for c in part) for part in parts)
 
 def _redact_log_payload(value):
     """Recursively redact sensitive values in a request/response log payload."""
@@ -62,6 +78,9 @@ def _redact_log_payload(value):
         return out
     if isinstance(value, list):
         return [_redact_log_payload(v) for v in value]
+    # Redact opaque JWS/JWE tokens regardless of their key name.
+    if _looks_like_jose(value):
+        return _REDACTED
     return value
 
 class VDPClient:

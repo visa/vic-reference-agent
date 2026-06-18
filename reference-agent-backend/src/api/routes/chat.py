@@ -6,11 +6,13 @@
 #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+import asyncio
+import logging
 from uuid import uuid4
 from fastapi import APIRouter, Header, status
 from src.dependencies import ChatServiceDep
 from src.schemas.chat import ChatRequest, ChatResponse
-from src.services.agent import reset_thread
+from src.services.agent import reset_thread, _checkout_lock, _LOCK_ACQUIRE_TIMEOUT_SECONDS
 
 router = APIRouter()
 
@@ -31,8 +33,18 @@ async def chat(
     )
 
 @router.post("/reset", status_code=status.HTTP_204_NO_CONTENT)
-def reset_chat(
+async def reset_chat(
     chat_service: ChatServiceDep,
     x_session_id: str | None = Header(default=None),
 ) -> None:
-    reset_thread(_session_id(x_session_id))
+    # Hold _checkout_lock around reset so a concurrent /chat/reset can't disarm an
+    # in-flight checkout mid-flight; bounded acquire so a hung checkout can't stall it.
+    try:
+        await asyncio.wait_for(_checkout_lock.acquire(), timeout=_LOCK_ACQUIRE_TIMEOUT_SECONDS)
+    except asyncio.TimeoutError:
+        logging.error("Error resetting chat: %s", "LockAcquireTimeout")
+        return
+    try:
+        reset_thread(_session_id(x_session_id))
+    finally:
+        _checkout_lock.release()

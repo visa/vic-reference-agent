@@ -6,6 +6,8 @@
 #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+import asyncio
+from collections import OrderedDict
 from contextlib import asynccontextmanager
 from uuid import uuid4
 from fastapi import FastAPI
@@ -27,49 +29,124 @@ from src.config import settings
 from src.schemas.commerce import Credentials
 
 agent = None
+_checkpointer: InMemorySaver | None = None
 
-# Per-conversation thread ids, keyed by the client-supplied session id. Each
-# session gets its own LangGraph checkpoint thread, so concurrent users cannot
-# read or hijack each other's conversation history (was a shared module global).
-_session_threads: dict[str, str] = {}
+# Per-conversation thread ids, keyed by the client-supplied session id, so
+# concurrent users can't read each other's history. Bounded with LRU eviction so
+# a flood of distinct X-Session-Id values can't grow the map without limit.
+_MAX_SESSIONS = 1000
+_session_threads: "OrderedDict[str, str]" = OrderedDict()
 
-# Checkout credentials, live only during a single server-initiated checkout (set
-# in store_credentials, cleared in complete_checkout's finally). on_elicitation
-# returns an error while this is None, so an injection-triggered checkout_cart
-# during a search can't exfiltrate card data. Module-level rather than a
-# ContextVar: the MCP elicitation callback runs in lifespan()'s receive-loop task
-# and can't see ContextVars set by the request task.
+def _drop_checkpoint(thread_id: str) -> None:
+    """Reclaim an evicted/rotated thread's InMemorySaver checkpoint so its memory
+    is freed (the LRU cap on the id map alone would still leak checkpoints)."""
+    saver = _checkpointer
+    if saver is None:
+        return
+    try:
+        saver.delete_thread(thread_id)
+    except Exception:
+        # Best-effort reclaim; never let cleanup break a request.
+        pass
+
+# Checkout credentials live only during the single checkout that owns
+# _checkout_lock. on_elicitation runs in lifespan()'s receive-loop task, so it
+# can't see ContextVars or request locals; the module slot instead fails closed
+# on two flags: _checkout_in_progress is True only inside complete_checkout's
+# locked store->ainvoke window (so /chat and an injection-driven checkout_cart
+# get nothing), and _credentials_token ties the card data to that one checkout.
 _current_credentials: Credentials | None = None
+_credentials_token: str | None = None
+_checkout_in_progress: bool = False
+
+# One-shot latch: armed when store_credentials mints a token, consumed by the
+# first on_elicitation read. Bounds card-data release to a single read, so a
+# second (injection-driven) elicitation in the same window gets ErrorData.
+_pending_elicit_token: str | None = None
+
+# Serializes store -> ainvoke -> clear so two concurrent checkouts can't race on
+# the shared credential slot.
+_checkout_lock = asyncio.Lock()
+
+# How long a queued /chat or /checkout waits to acquire _checkout_lock before
+# giving up, so a long-running holder can't make others wait indefinitely. The
+# holder itself runs untimed (per-call latency is bounded by the LLM client).
+_LOCK_ACQUIRE_TIMEOUT_SECONDS = 30
 
 def _thread_id_for(session_id: str) -> str:
-    """Return a stable thread id for a session, creating one on first use."""
+    """Return a stable thread id for a session, creating one on first use.
+
+    Uses LRU semantics with a hard cap so the map cannot grow unbounded.
+    """
     thread_id = _session_threads.get(session_id)
     if thread_id is None:
         thread_id = str(uuid4())
         _session_threads[session_id] = thread_id
+        # Evict least-recently-used sessions beyond the cap, reclaiming each
+        # evicted thread's checkpoint so memory cannot grow unbounded.
+        while len(_session_threads) > _MAX_SESSIONS:
+            _, evicted_thread = _session_threads.popitem(last=False)
+            _drop_checkpoint(evicted_thread)
+    else:
+        _session_threads.move_to_end(session_id)
     return thread_id
 
 def reset_thread(session_id: str) -> None:
     """Rotate a session's conversation thread and drop any held credentials."""
+    old_thread = _session_threads.get(session_id)
     _session_threads[session_id] = str(uuid4())
-    clear_credentials()
+    if old_thread is not None:
+        _drop_checkpoint(old_thread)
+    # Only disarm the slot when no checkout owns it, so a concurrent /chat/reset
+    # can't clear an in-flight checkout's credentials mid-flight.
+    if not _checkout_in_progress:
+        clear_credentials()
 
-def store_credentials(credentials: Credentials) -> None:
-    global _current_credentials
+def store_credentials(credentials: Credentials) -> str:
+    """Arm the credential slot for the current checkout and mark a checkout as
+    in progress. Returns a correlation token the caller passes to
+    clear_credentials. Must be called while holding _checkout_lock."""
+    global _current_credentials, _credentials_token, _checkout_in_progress
+    global _pending_elicit_token
     _current_credentials = credentials
+    _credentials_token = str(uuid4())
+    _checkout_in_progress = True
+    # Arm the one-shot release latch with this checkout's token; on_elicitation
+    # will consume it on the single legitimate read.
+    _pending_elicit_token = _credentials_token
+    return _credentials_token
 
-def clear_credentials() -> None:
-    global _current_credentials
+def clear_credentials(token: str | None = None) -> None:
+    """Disarm the credential slot. The token guards against a stale/foreign
+    caller clearing an unrelated checkout's slot; clearing always fails closed."""
+    global _current_credentials, _credentials_token, _checkout_in_progress
+    global _pending_elicit_token
+    if token is not None and token != _credentials_token:
+        return
     _current_credentials = None
+    _credentials_token = None
+    _checkout_in_progress = False
+    _pending_elicit_token = None
 
 async def on_elicitation(context: RequestContext, params: ElicitRequestParams) -> ElicitResult | ErrorData:
-    # Release card data only while a checkout is in progress (see _current_credentials).
+    # Fail closed: release card data only while a checkout is in progress and the
+    # one-shot latch is still armed. Outside complete_checkout's locked window
+    # (e.g. /chat or an injection-driven checkout_cart) this is False/None and
+    # returns nothing; the latch also bounds release to a single read.
+    global _pending_elicit_token
+    if not _checkout_in_progress or _pending_elicit_token is None:
+        return ErrorData(
+            code=INTERNAL_ERROR,
+            message="No checkout in progress; card data unavailable."
+        )
     credentials = _current_credentials
     if credentials is None:
         return ErrorData(
             code=INTERNAL_ERROR,
             message="No credentials available for checkout."
         )
+    # Consume the latch BEFORE returning so card data is released at most once.
+    _pending_elicit_token = None
     return ElicitResult(
         action="accept",
         content={
@@ -140,11 +217,13 @@ async def lifespan(app: FastAPI):
                 base_url=settings.llm_base_url,
                 http_async_client=httpx.AsyncClient(verify=settings.llm_tls_verify)
             )
+            global _checkpointer
+            _checkpointer = InMemorySaver()
             agent = create_agent(
                 model=model,
                 tools=tools,
                 system_prompt=AGENT_PROMPT,
-                checkpointer=InMemorySaver()
+                checkpointer=_checkpointer
             )
             yield
 

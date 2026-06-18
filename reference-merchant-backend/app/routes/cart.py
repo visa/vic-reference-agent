@@ -22,6 +22,7 @@ from app.schemas import (
     Cart, CartItemCreate, CartItemUpdate,
     Message)
 from datetime import datetime
+import secrets
 import uuid
 import re
 import logging
@@ -39,9 +40,9 @@ def calculate_cart_totals(cart_items):
     return subtotal, tax, shipping, total
 
 def generate_order_number():
-    """Generate a unique order number"""
+    """Generate a unique order number with a random suffix so it is not enumerable."""
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    random_suffix = uuid.uuid4().hex[:6].upper()
+    random_suffix = secrets.token_hex(12).upper()
     return f"ORD-{timestamp}-{random_suffix}"
 
 @router.post("/", response_model=Cart)
@@ -505,7 +506,7 @@ async def checkout_cart(
     return {
         "message": "Order created and payment processed successfully",
         "order": {
-            "id": order.id,
+            "id": order.public_id,
             "order_number": order.order_number,
             "customer_name": order.customer_name,
             "customer_email": order.customer_email,

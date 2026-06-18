@@ -8,18 +8,16 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ordersAPI } from '../services/api';
 
 const OrdersPage = () => {
   const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Orders are scoped to a customer email, so nothing loads on mount; start
+  // unloaded so the search form renders instead of a perpetual spinner.
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchEmail, setSearchEmail] = useState('');
-
-  useEffect(() => {
-    // Orders are scoped to a customer email; don't load all orders on mount.
-  }, []);
 
   const loadOrders = async (customerEmail = '') => {
     // The orders API requires a customer email scope (no enumerate-all).
@@ -52,7 +50,9 @@ const OrdersPage = () => {
     }
 
     try {
-      await ordersAPI.cancelOrder(orderId);
+      // searchEmail is the owner scope these orders were loaded under; the
+      // backend requires it to authorize the cancellation of this order.
+      await ordersAPI.cancelOrder(orderId, searchEmail);
       loadOrders(searchEmail); // Reload orders
     } catch (err) {
       alert('Failed to cancel order. Please try again.');
@@ -174,17 +174,32 @@ const OrdersPage = () => {
 export const OrderDetailPage = () => {
   const { orderNumber } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // The lookup is owner-scoped on the backend, so we need the owning email.
+  // Accept it from a capability link (?email=...) or prompt for it.
+  const initialEmail = searchParams.get('email') || '';
+  const [email, setEmail] = useState(initialEmail);
   const [order, setOrder] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(Boolean(initialEmail));
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    loadOrder();
+    if (initialEmail) {
+      loadOrder(initialEmail);
+    }
+    // Only auto-load when an email was supplied via the link.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderNumber]);
 
-  const loadOrder = async () => {
+  const loadOrder = async (customerEmail) => {
+    if (!customerEmail) {
+      setError('Enter the email address used on this order to view it.');
+      return;
+    }
+    setLoading(true);
+    setError(null);
     try {
-      const response = await ordersAPI.getOrderByNumber(orderNumber);
+      const response = await ordersAPI.getOrderByNumber(orderNumber, customerEmail);
       setOrder(response.data);
     } catch (err) {
       setError('Order not found.');
@@ -192,6 +207,11 @@ export const OrderDetailPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLookup = (e) => {
+    e.preventDefault();
+    loadOrder(email);
   };
 
   if (loading) {
@@ -202,15 +222,28 @@ export const OrderDetailPage = () => {
     );
   }
 
-  if (error || !order) {
+  // No order loaded yet: prompt for the owning email (object-level auth).
+  if (!order) {
     return (
       <div style={styles.container}>
-        <div style={styles.error}>
-          {error}
-          <button onClick={() => navigate('/')} style={styles.homeButton}>
-            Go Home
+        <button onClick={() => navigate(-1)} style={styles.backButton}>
+          ← Back
+        </button>
+        <h1 style={styles.title}>Track Order #{orderNumber}</h1>
+        <form onSubmit={handleLookup} style={styles.searchForm}>
+          <input
+            type="email"
+            placeholder="Email address used on this order..."
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            style={styles.searchInput}
+            required
+          />
+          <button type="submit" style={styles.searchButton}>
+            View Order
           </button>
-        </div>
+        </form>
+        {error && <div style={styles.error}>{error}</div>}
       </div>
     );
   }
@@ -220,7 +253,7 @@ export const OrderDetailPage = () => {
       <button onClick={() => navigate(-1)} style={styles.backButton}>
         ← Back
       </button>
-      
+
       <div style={styles.orderConfirmation}>
         <h1 style={styles.confirmationTitle}>Order Confirmed!</h1>
         <p style={styles.confirmationText}>

@@ -71,14 +71,19 @@ export const ordersAPI = {
     return api.get(`/orders?${searchParams.toString()}`);
   },
   
-  getOrder: (id) => api.get(`/orders/${id}`),
-  
-  getOrderByNumber: (orderNumber) => api.get(`/orders/number/${orderNumber}`),
-  
-  updateOrderStatus: (id, status) => 
-    api.put(`/orders/${id}/status?status=${status}`),
-  
-  cancelOrder: (id) => api.delete(`/orders/${id}`),
+  // Owner-scoped: the backend enforces object-level authorization, so the
+  // owning customer email must accompany by-id reads/mutations.
+  getOrder: (id, customerEmail) =>
+    api.get(`/orders/${id}?customer_email=${encodeURIComponent(customerEmail)}`),
+
+  getOrderByNumber: (orderNumber, customerEmail) =>
+    api.get(`/orders/number/${orderNumber}?customer_email=${encodeURIComponent(customerEmail)}`),
+
+  updateOrderStatus: (id, status, customerEmail) =>
+    api.put(`/orders/${id}/status?status=${encodeURIComponent(status)}&customer_email=${encodeURIComponent(customerEmail)}`),
+
+  cancelOrder: (id, customerEmail) =>
+    api.delete(`/orders/${id}?customer_email=${encodeURIComponent(customerEmail)}`),
 };
 
 // Individual exports for convenience

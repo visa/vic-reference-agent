@@ -6,6 +6,7 @@
 #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+import asyncio
 import logging
 from typing import List
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -15,7 +16,9 @@ from src.schemas.commerce import AgenticCheckoutResponse, Credentials
 from src.services.agent import (
     send_message,
     store_credentials,
-    clear_credentials
+    clear_credentials,
+    _checkout_lock,
+    _LOCK_ACQUIRE_TIMEOUT_SECONDS,
 )
 
 class ChatService:
@@ -28,7 +31,19 @@ class ChatService:
             User Message: {message}
             Selected Products: {products}
             """
-            response_json = await send_message(HumanMessage(content=formatted_message), session_id)
+            # Hold _checkout_lock across send_message so an injection-triggered
+            # checkout_cart on /chat can't run concurrently with a real checkout.
+            # Only the acquire is bounded (a queued caller fails fast); the holder
+            # runs untimed so a multi-step turn isn't cut off.
+            try:
+                await asyncio.wait_for(_checkout_lock.acquire(), timeout=_LOCK_ACQUIRE_TIMEOUT_SECONDS)
+            except asyncio.TimeoutError:
+                logging.error("Error processing message: %s", "LockAcquireTimeout")
+                return ChatResponse(response_message="An error occurred while processing your message. Please try again later.")
+            try:
+                response_json = await send_message(HumanMessage(content=formatted_message), session_id)
+            finally:
+                _checkout_lock.release()
             order_summary = response_json.get("order_summary")
             if order_summary:
                 active_cards = await self.card_repo.get_all_active()
@@ -46,8 +61,16 @@ class ChatService:
             return ChatResponse(response_message="An error occurred while processing your message. Please try again later.")
 
     async def complete_checkout(self, credentials: Credentials, session_id: str) -> AgenticCheckoutResponse:
+        # Serialize store -> ainvoke -> clear so concurrent checkouts can't leak
+        # one caller's card data into another's elicitation; bounded acquire.
         try:
-            store_credentials(credentials)
+            await asyncio.wait_for(_checkout_lock.acquire(), timeout=_LOCK_ACQUIRE_TIMEOUT_SECONDS)
+        except asyncio.TimeoutError:
+            logging.error("Error completing checkout: %s", "LockAcquireTimeout")
+            raise RuntimeError("An error occurred while completing the checkout. Please try again later.")
+        token = None
+        try:
+            token = store_credentials(credentials)
             response_json = await send_message(SystemMessage(content="COMPLETE CHECKOUT"), session_id)
             checkout_response = AgenticCheckoutResponse(**response_json)
             return checkout_response
@@ -57,4 +80,7 @@ class ChatService:
             logging.error("Error completing checkout: %s", type(e).__name__)
             raise RuntimeError("An error occurred while completing the checkout. Please try again later.")
         finally:
-            clear_credentials()
+            # Disarm the slot (token-scoped) before releasing the lock so the slot
+            # is never readable by another path while unowned.
+            clear_credentials(token)
+            _checkout_lock.release()
